@@ -78,7 +78,8 @@ print(device_report())
 ```
 
 `device='cuda'` never falls back to the CPU silently: it raises an error that says what is missing.
-`device='auto'` (the default) uses CUDA when it initialises and the CPU otherwise, with a warning
+`device='auto'` (the default of `SpindleDetector` and `OnnxModel`; the seizure functions default to
+the CPU, as brainmaze-torch 0.2.0 did) uses CUDA when it initialises and the CPU otherwise, with a warning
 when a GPU setup is installed but unusable.
 
 ## Quick start: seizure probability
@@ -93,10 +94,10 @@ t, p = predict_channel_seizure_probability(x, fs, model='modelA')   # x: one cha
 This is the brainmaze-torch 0.2.0 pipeline, unchanged, with the model on ONNX Runtime: the same
 function names and outputs (migrating = changing the import from
 `brainmaze_torch.seizure_detection`), the brainmaze-torch golden tests pass, and the
-probabilities match PyTorch within ~1e-6. NaN means "not evaluated" (t = 0, gaps, flat
+probabilities match PyTorch to float32 rounding (typically ~1e-6, at most ~2e-5). NaN means "not evaluated" (t = 0, gaps, flat
 segments), never "no seizure": use `np.nanmax` / `np.isfinite`, never `fillna(0)`. `fs` must be a
-whole, even number >= 200 Hz (resample first, with anti-aliasing). `use_cuda` now defaults to
-`'auto'`; `use_cuda=False` forces the CPU.
+whole, even number >= 200 Hz (resample first, with anti-aliasing). As in brainmaze-torch 0.2.0 it
+runs on the CPU by default; `use_cuda=True` or `device='cuda'` / `'auto'` opt in to the GPU.
 
 ## Quick start: sleep spindles
 

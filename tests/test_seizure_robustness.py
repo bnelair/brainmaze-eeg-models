@@ -13,6 +13,7 @@ import pytest
 
 from brainmaze_eeg_models import runtime
 from brainmaze_eeg_models.runtime import OnnxModel
+from brainmaze_eeg_models.seizure import _seizure_detect as sd
 from brainmaze_eeg_models.seizure import (
     infer_seizure_probability,
     load_trained_model,
@@ -369,6 +370,82 @@ def test_device_conflicts_raise(model, monkeypatch):
     monkeypatch.setattr(runtime._ort(), "get_available_providers", lambda: ["CPUExecutionProvider"])
     with pytest.raises(RuntimeError, match="device='cuda'"):
         predict_channel_seizure_probability(x, FS, 'modelA', use_cuda=True, cuda_number=3, **KW)
+
+
+@pytest.mark.parametrize("device, use_cuda", [("auto", False), ("auto", True), ("cpu", True), ("cuda", False)])
+def test_device_and_use_cuda_must_agree(device, use_cuda):
+    # #5 R2: device='auto' with an explicit use_cuda is a conflict (it could run on the GPU
+    # although use_cuda=False asked for the CPU); every disagreement raises before any work
+    x = np.random.default_rng(19).standard_normal(20 * FS)
+    with pytest.raises(ValueError, match="contradicts"):
+        predict_channel_seizure_probability(x, FS, 'modelA', use_cuda=use_cuda, device=device, **KW)
+    with pytest.raises(ValueError, match="contradicts"):
+        infer_seizure_probability(np.zeros((1, 100, 5)), 'modelA', use_cuda=use_cuda, device=device)
+
+
+def test_agreeing_device_arguments_are_accepted(model):
+    x = np.random.default_rng(20).standard_normal(20 * FS)
+    _, p1 = predict_channel_seizure_probability(x, FS, 'modelA', use_cuda=False, device='cpu', **KW)
+    _, p2 = predict_channel_seizure_probability(x, FS, 'modelA', use_cuda=0, **KW)      # 0.2.0 accepted 0/1
+    assert_prob_close(p1, p2)
+    for bad in ("false", 2, 0.5):
+        with pytest.raises(ValueError, match="use_cuda"):
+            predict_channel_seizure_probability(x, FS, 'modelA', use_cuda=bad, **KW)
+    with pytest.raises(ValueError, match="device"):
+        predict_channel_seizure_probability(x, FS, 'modelA', device='gpu', **KW)
+
+
+def test_default_device_is_the_cpu_as_in_brainmaze_torch_020(monkeypatch):
+    # #5 R3: on a CUDA host the defaults must still run on the CPU (0.2.0: use_cuda=False);
+    # 'auto' / 'cuda' are opt-in. Simulate a CUDA host whose sessions really get CUDA.
+    import inspect
+    from brainmaze_eeg_models.seizure import _models as sm
+    assert inspect.signature(load_trained_model).parameters['device'].default == 'cpu'
+    ort = runtime._ort()
+    real = ort.InferenceSession
+
+    class CudaSession:
+        def __init__(self, path, sess_options=None, providers=None):
+            self._s = real(path, sess_options=sess_options, providers=["CPUExecutionProvider"])
+            self._cuda = any(isinstance(p, tuple) and p[0] == "CUDAExecutionProvider" for p in providers)
+
+        def get_providers(self):
+            return (["CUDAExecutionProvider"] if self._cuda else []) + ["CPUExecutionProvider"]
+
+        def __getattr__(self, k):
+            return getattr(self._s, k)
+
+    monkeypatch.setattr(ort, "get_available_providers", lambda: ["CUDAExecutionProvider", "CPUExecutionProvider"])
+    monkeypatch.setattr(ort, "InferenceSession", CudaSession)
+    sm._load.cache_clear()
+    try:
+        assert load_trained_model('modelA').device == 'cpu'
+        assert load_trained_model('modelA', device='auto').device == 'cuda'
+        seen = []
+        orig = sm.load_trained_model
+
+        def spy(name, device='cpu', **kw):
+            m = orig(name, device=device, **kw)
+            seen.append(m.device)
+            return m
+
+        monkeypatch.setattr(sd, "load_trained_model", spy)
+        x = np.random.default_rng(21).standard_normal(20 * FS)
+        predict_channel_seizure_probability(x, FS, 'modelA', **KW)                  # default -> CPU
+        predict_channel_seizure_probability(x, FS, 'modelA', use_cuda=False, **KW)  # -> CPU
+        predict_channel_seizure_probability(x, FS, 'modelA', device='auto', **KW)   # opt in -> GPU
+        predict_channel_seizure_probability(x, FS, 'modelA', use_cuda=True, **KW)   # opt in -> GPU
+        assert seen == ['cpu', 'cpu', 'cuda', 'cuda']
+        # the torch-era pattern: load with defaults, then use_cuda=False -> works (CPU)
+        m = load_trained_model('modelA')
+        predict_channel_seizure_probability(x, FS, m, use_cuda=False, **KW)
+        # a model loaded on the GPU runs there when no device is requested
+        g = load_trained_model('modelA', device='cuda')
+        predict_channel_seizure_probability(x, FS, g, **KW)
+        with pytest.raises(ValueError, match="runs on 'cuda'"):
+            predict_channel_seizure_probability(x, FS, g, use_cuda=False, **KW)
+    finally:
+        sm._load.cache_clear()
 
 
 def test_device_errors_do_not_depend_on_data():

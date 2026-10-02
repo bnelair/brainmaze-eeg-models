@@ -31,6 +31,7 @@ ROOT = os.path.dirname(PKG)
 #: package must add its registry here (the test fails for an unregistered _models/ folder).
 REGISTRIES: dict[str, str] = {
     "spindles": "brainmaze_eeg_models.spindles._detector:MODELS",
+    "seizure": "brainmaze_eeg_models.seizure._models:TRAINED_MODELS",
 }
 
 

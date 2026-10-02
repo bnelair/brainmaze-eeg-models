@@ -14,7 +14,7 @@ TRAINED_MODELS = {
 }
 
 
-def load_trained_model(model_name, device='auto', threads=None, cuda_device_id=0):
+def load_trained_model(model_name, device='cpu', threads=None, cuda_device_id=0):
     """Load one of the bundled, pre-trained seizure-detection models.
 
     Parameters
@@ -22,9 +22,11 @@ def load_trained_model(model_name, device='auto', threads=None, cuda_device_id=0
     model_name : {'modelA', 'modelB'}
         ``'modelA'``: the model from the published work (Sladky et al. 2022).
         ``'modelB'``: the same architecture trained on an extended data set.
-    device : {'auto', 'cpu', 'cuda'}
-        See :class:`brainmaze_eeg_models.runtime.OnnxModel` (``'cuda'`` never falls back
-        to the CPU silently).
+    device : {'cpu', 'auto', 'cuda'}
+        Default ``'cpu'``, as brainmaze-torch 0.2.0 (bit-reproducible across machines).
+        ``'auto'`` (GPU if usable, else CPU) and ``'cuda'`` are opt-in; see
+        :class:`brainmaze_eeg_models.runtime.OnnxModel` (``'cuda'`` never falls back to the
+        CPU silently).
     threads : int, optional
         CPU threads per inference call (None: ONNX Runtime default).
     cuda_device_id : int

@@ -24,7 +24,7 @@ import warnings
 import numpy as np
 from scipy.signal import spectrogram
 
-from ..runtime import OnnxModel
+from ..runtime import DEVICES, OnnxModel
 from ._models import load_trained_model
 
 #: Number of spectrogram frequency bins (1 Hz each, 0..99 Hz) the model expects.
@@ -91,21 +91,39 @@ def _to_half_seconds(value, name, minimum):
 def _resolve_model(model, use_cuda, cuda_number, device):
     """``model`` (name or loaded :class:`OnnxModel`) + device arguments -> an OnnxModel.
 
-    Device: ``device`` if given; else ``use_cuda=True`` -> 'cuda' (GPU ``cuda_number``),
-    ``use_cuda=False`` -> 'cpu'; both None -> 'auto'. A loaded model keeps its device; asking
-    for a different one raises instead of silently running elsewhere.
+    Device (same default as brainmaze-torch 0.2.0: the CPU):
+
+    - only ``use_cuda``: ``True`` -> 'cuda' (GPU ``cuda_number``), ``False`` -> 'cpu';
+    - only ``device``: that device ('auto' = GPU if usable, else CPU);
+    - both: ``device`` must equal what ``use_cuda`` asks for ('cuda' / 'cpu'), otherwise
+      :class:`ValueError` (so ``device='auto'`` with an explicit ``use_cuda`` is a conflict);
+    - neither: 'cpu' for a model name; a loaded model runs where it was loaded.
+
+    A loaded model keeps its device; explicitly asking for a different one raises instead of
+    silently running elsewhere.
     """
-    if device is not None and use_cuda is not None and (device == 'cuda') != bool(use_cuda):
-        raise ValueError(f"device={device!r} contradicts use_cuda={use_cuda!r}; pass only one of them")
-    if device is None:
-        device = 'auto' if use_cuda is None else ('cuda' if use_cuda else 'cpu')
+    if device is not None and device not in DEVICES:
+        raise ValueError(f"device must be one of {DEVICES}, got {device!r}")
+    if use_cuda is not None:
+        if isinstance(use_cuda, (np.integer, int)) and not isinstance(use_cuda, (bool, np.bool_)) and use_cuda in (0, 1):
+            use_cuda = bool(use_cuda)            # 0 / 1 as accepted by brainmaze-torch
+        if not isinstance(use_cuda, (bool, np.bool_)):
+            raise ValueError(f"use_cuda must be True, False or None, got {use_cuda!r}")
+        use_cuda = bool(use_cuda)
+    if device is not None and use_cuda is not None:
+        wanted = 'cuda' if use_cuda else 'cpu'
+        if device != wanted:
+            raise ValueError(f"device={device!r} contradicts use_cuda={use_cuda!r} (= {wanted!r}); "
+                             "pass only one of them")
+    if device is None and use_cuda is not None:
+        device = 'cuda' if use_cuda else 'cpu'
     if isinstance(model, str):
-        return load_trained_model(model, device=device, cuda_device_id=cuda_number)
+        return load_trained_model(model, device=device or 'cpu', cuda_device_id=cuda_number)
     if not isinstance(model, OnnxModel):
         raise TypeError(
             "model must be 'modelA', 'modelB' or a model from load_trained_model(); PyTorch models "
             "are not supported (brainmaze-eeg-models runs on ONNX Runtime)")
-    if device != 'auto' and model.device != device:
+    if device not in (None, 'auto') and model.device != device:
         raise ValueError(
             f"the loaded model runs on {model.device!r} but {device!r} was requested; load it with "
             f"load_trained_model(..., device={device!r})")
@@ -235,12 +253,13 @@ def infer_seizure_probability(x, model='modelA', use_cuda=None, cuda_number=0, *
         device it was loaded on).
     use_cuda : bool, optional
         ``True``: run on the GPU ``cuda_number`` (error if CUDA is unusable);
-        ``False``: run on the CPU. Default None: ``device``, else 'auto'
-        (GPU if usable, else CPU). Kept for compatibility with brainmaze-torch.
+        ``False``: run on the CPU. Default None: ``device``, else the CPU (as in
+        brainmaze-torch 0.2.0; a loaded model runs where it was loaded).
     cuda_number : int, optional
         CUDA device index. Default 0.
     device : {'auto', 'cpu', 'cuda'}, optional
-        Alternative to ``use_cuda`` (keyword only).
+        Alternative to ``use_cuda`` (keyword only); ``'auto'`` opts in to the GPU when it
+        is usable. Giving both ``device`` and ``use_cuda`` is allowed only when they agree.
 
     Returns
     -------
@@ -259,7 +278,9 @@ def infer_seizure_probability(x, model='modelA', use_cuda=None, cuda_number=0, *
     Notes
     -----
     The ONNX model gives the same probabilities as the PyTorch model of brainmaze-torch
-    0.2.0 to within float32 rounding (parity tests: max abs difference ~1e-6).
+    0.2.0 to within float32 rounding: typically ~1e-6, at most ~2e-5 in an independent
+    40-run check (largest near p = 0.5, where the softmax is steepest; the float32 BiLSTM
+    over 599 steps accumulates rounding differently in the two runtimes).
     """
     x = np.asarray(x)
     if x.ndim != 3 or x.shape[1] != N_FREQ_BINS or x.shape[2] < 2:
@@ -308,7 +329,8 @@ def predict_channel_seizure_probability(
         or a model from :func:`load_trained_model`. Default ``'modelA'``.
     use_cuda : bool, optional
         ``True``: GPU ``cuda_number`` (error if CUDA is unusable); ``False``: CPU.
-        Default None: ``device``, else 'auto' (GPU if usable, else CPU).
+        Default None: ``device``, else the CPU (as in brainmaze-torch 0.2.0; a loaded
+        model runs where it was loaded).
     cuda_number : int, optional
         CUDA device index. Default 0.
     n_batch : int, optional
@@ -349,7 +371,8 @@ def predict_channel_seizure_probability(
         from the edge of the first/last window (shorter model context, hence
         less reliable). If False, they are NaN.
     device : {'auto', 'cpu', 'cuda'}, optional
-        Alternative to ``use_cuda`` (keyword only).
+        Alternative to ``use_cuda`` (keyword only); ``'auto'`` opts in to the GPU when it
+        is usable. Giving both ``device`` and ``use_cuda`` is allowed only when they agree.
 
     Returns
     -------

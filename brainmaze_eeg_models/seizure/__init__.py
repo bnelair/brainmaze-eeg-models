@@ -8,21 +8,26 @@ This is the brainmaze-torch 0.2.0 seizure pipeline with the model running on ONN
 
 .. code-block:: python
 
-    # before: from brainmaze_eeg_models.seizure import predict_channel_seizure_probability
+    # before: from brainmaze_torch.seizure_detection import predict_channel_seizure_probability
     from brainmaze_eeg_models.seizure import predict_channel_seizure_probability
 
 Differences from brainmaze-torch 0.2.0:
 
 - :func:`load_trained_model` returns an :class:`~brainmaze_eeg_models.runtime.OnnxModel`
   (not a ``torch.nn.Module``); passing a PyTorch model raises ``TypeError``.
-- Device: ``use_cuda`` now defaults to None = ``'auto'`` (GPU if usable, else CPU);
-  ``use_cuda=False`` forces the CPU and ``use_cuda=True`` the GPU ``cuda_number`` (an error if
-  CUDA is unusable, never a silent CPU fallback). A keyword ``device='auto'|'cpu'|'cuda'`` is
-  accepted as well. On the GPU, TF32 is disabled so results match the CPU.
+- Device: the default is the **CPU**, as in 0.2.0 (``use_cuda=None`` and ``device=None`` ->
+  CPU; :func:`load_trained_model` defaults to ``device='cpu'``). The GPU is opt-in:
+  ``use_cuda=True`` (GPU ``cuda_number``; an error if CUDA is unusable, never a silent CPU
+  fallback), or the keyword ``device='cuda'`` / ``'auto'`` (GPU if usable, else CPU). Giving
+  both ``use_cuda`` and ``device`` is allowed only when they agree (``device='auto'`` with an
+  explicit ``use_cuda`` raises). A model from :func:`load_trained_model` runs where it was
+  loaded. On the GPU, TF32 is disabled; GPU results are expected to match the CPU to float32
+  rounding but have not been measured on a GPU yet.
 - Numbers: the ONNX models (exported from the 0.2.0 weights, ``tools/export_seizure_onnx.py``
-  in the repository) give the same probabilities as PyTorch within float32 rounding (parity
-  tests: max abs difference about 1e-6, NaN masks identical); the brainmaze-torch golden
-  tests pass unchanged.
+  in the repository) give the same probabilities as PyTorch within float32 rounding: typically
+  ~1e-6, at most ~2e-5 (largest near p = 0.5; the float32 BiLSTM accumulates rounding
+  differently in the two runtimes); NaN masks identical. The parity tests use a tolerance of
+  1e-4, like the brainmaze-torch golden tests, which pass unchanged.
 
 Bundled models (:func:`load_trained_model`):
 
