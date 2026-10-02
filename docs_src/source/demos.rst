@@ -21,18 +21,21 @@ with its 11-16 Hz band.
     pip install brainmaze-eeg-models matplotlib
     python demo/spindle_detection/spindles_one_night.py --plot
 
-Output (CPU, 2013 6-core Xeon):
+Output (CPU only: Xeon E5-1650 v2 from 2013, 6 cores / 12 threads, all threads used; the run
+time varies with machine load, 253-271 s in our runs):
 
 .. code-block:: text
 
-    6.76 h in 253 s (96x real time) on cpu; 854 spindles; evaluated 99.4 % of the recording
-     stage  minutes  spindles  per min
-      Wake    151.6       211     1.39
-        N1     50.5        48     0.95
-        N2     84.5       431     5.10
-        N3     27.5        89     3.24
-       REM     71.5        50     0.70
+    6.76 h in 271 s (90x real time) on cpu; 854 spindles; evaluated 99.4 % of the recording
+     stage  minutes evaluated  spindles  per min
+      Wake    151.6     151.4       211     1.39
+        N1     50.5      50.5        48     0.95
+        N2     84.5      84.5       431     5.10
+        N3     27.5      27.5        89     3.24
+       REM     71.5      71.5        50     0.70
     median duration 0.99 s, median confidence 0.81
 
+Densities are computed over the *evaluated* minutes of each stage (gaps and skipped windows,
+``res.not_evaluated``, are excluded from the denominator), as the demo script shows.
 Spindles concentrate in N2 (about 5 per minute) and N3; the detections in wake and REM are
 spindle-like activity (e.g. alpha bursts) that a hypnogram must exclude.

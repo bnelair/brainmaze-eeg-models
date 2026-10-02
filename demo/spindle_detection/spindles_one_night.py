@@ -14,7 +14,8 @@ Usage::
     pip install brainmaze-eeg-models matplotlib
     python spindles_one_night.py            # add --plot for a figure
 
-It prints the number of spindles and their density (per minute) in every sleep stage. Spindles
+It prints the number of spindles and their density (per minute of evaluated time) in every
+sleep stage. Spindles
 belong to NREM sleep (mostly N2); detections in wake are mostly alpha bursts and other
 spindle-like activity: restrict the analysis to NREM epochs from a hypnogram.
 """
@@ -65,11 +66,18 @@ def main():
 
     centre = ((res.start + res.end) / 2 * fs).astype(int)
     stage_of_spindle = hyp[np.clip(centre, 0, len(hyp) - 1)]
-    print(f"{'stage':>6} {'minutes':>8} {'spindles':>9} {'per min':>8}")
+    # Densities over the EVALUATED time only: no spindle can be reported in gaps and skipped
+    # windows (res.not_evaluated), so that time must not count in the denominator.
+    evaluated = np.ones(len(x), dtype=bool)
+    for a, b in res.not_evaluated[0]:
+        evaluated[int(np.floor(a * fs)):int(np.ceil(b * fs))] = False
+    print(f"{'stage':>6} {'minutes':>8} {'evaluated':>9} {'spindles':>9} {'per min':>8}")
     for code, name in STAGES.items():
         minutes = np.sum(hyp == code) / fs / 60
+        ev_minutes = np.sum((hyp == code) & evaluated) / fs / 60
         n = int(np.sum(stage_of_spindle == code))
-        print(f"{name:>6} {minutes:8.1f} {n:9d} {n / minutes if minutes else float('nan'):8.2f}")
+        print(f"{name:>6} {minutes:8.1f} {ev_minutes:9.1f} {n:9d} "
+              f"{n / ev_minutes if ev_minutes else float('nan'):8.2f}")
     print("median duration %.2f s, median confidence %.2f" % (np.median(res.end - res.start), np.median(res.confidence)))
 
     if args.plot:
