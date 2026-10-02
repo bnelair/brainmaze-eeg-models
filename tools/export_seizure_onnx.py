@@ -17,6 +17,10 @@ The exported graph is an export-safe wrapper with exactly the math of
 
 TorchScript-based exporter (``dynamo=False``), opset 18, dynamic batch and time axes. This
 is the configuration validated by the ONNX prototype (parity with PyTorch ~1e-6 end to end).
+The committed files were produced with torch 2.14.1+cpu and onnx 1.23.1; re-running with those
+versions reproduces them byte for byte. The TorchScript exporter is deprecated since torch 2.9
+(still present in 2.14). Do NOT switch to the dynamo exporter: in torch 2.14 it silently
+specialises the time axis to the example length (599), so other lengths fail at run time.
 """
 import argparse
 import hashlib
