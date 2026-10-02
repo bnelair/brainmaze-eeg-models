@@ -29,7 +29,9 @@ ROOT = os.path.dirname(PKG)
 
 #: model subpackage -> "module:attribute" of its registry {name: (file, sha256)}. A new model
 #: package must add its registry here (the test fails for an unregistered _models/ folder).
-REGISTRIES: dict[str, str] = {}
+REGISTRIES: dict[str, str] = {
+    "spindles": "brainmaze_eeg_models.spindles._detector:MODELS",
+}
 
 
 def _registered():
