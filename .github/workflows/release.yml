@@ -1,0 +1,113 @@
+name: Release
+
+# Runs on every push to main but only releases when the current pyproject version has no
+# tag yet -- i.e. right after a "Release vX.Y.Z" bump PR is merged. Ordinary dev -> main
+# feature merges leave the version unchanged and no-op.
+#
+# The shared reusable workflow does guard + test + build (and uploads the `dist` artifact).
+# Publishing to PyPI happens HERE, in this repo's own top-level `publish` job. Like
+# brainmaze-zmq and brainmaze-torch, this repo publishes with the organisation's PyPI API
+# token (secret PYPI_Token_General; maintainer decision), not Trusted Publishing. If that
+# token is scoped to existing projects only, the FIRST upload of this new project fails:
+# see "First release" in RELEASING.md (fallback: a PyPI pending trusted publisher). The tag
+# and GitHub Release are created only after a successful PyPI upload.
+#
+# While [project].version is the placeholder 0.0.0 (nothing released yet), the shared guard
+# sees no v0.0.0 tag and runs its test + build on every push to main, but `publish` is
+# skipped (and refuses 0.0.0 explicitly), so nothing is uploaded or tagged.
+#
+# If a run fails part-way, do NOT wait for the next push to main: that run would build,
+# publish and tag a different commit. Re-run the failed jobs of THIS run, or finish by hand;
+# see "Recovering from a failed release" in the family guide:
+# https://github.com/bnelair/brainmaze-sphinx/blob/main/RELEASING.md
+
+on:
+  push:
+    branches: [main]
+
+# One release run at a time, so two quick pushes cannot both see an untagged version and
+# race to publish/tag it. The name must differ from the group the shared workflow uses
+# (release-<repo>), or the called workflow would wait on its own caller.
+concurrency:
+  group: release-caller-${{ github.repository }}
+  cancel-in-progress: false
+
+# Least privilege by default: the reusable guard/test/build jobs (which install and run
+# third-party code) get a read-only token. Only `publish` gets contents: write.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: bnelair/brainmaze-sphinx/.github/workflows/release.yml@main
+    permissions:
+      contents: read
+    with:
+      versions: '[{"python": "3.10", "numpy": "<2"}, {"python": "3.12", "numpy": ">=2"}]'
+      # Block the publish if the built dist contains anything but the package.
+      dist-check: error
+      # Same lists as ci.yml (keep them in sync): only the trained ONNX models may ship, and
+      # every model listed in `required-assets` must be in the wheel AND the sdist.
+      allowed-assets: brainmaze_eeg_models/*/_models/*.onnx
+
+  publish:
+    needs: build
+    # 0.0.0 is the placeholder version of the unreleased package (pyproject.toml). It has no
+    # tag, so the shared guard reports it as releasable on every push to main; never publish
+    # it. The first real release is the "Release v0.1.0" PR from Prepare release (minor).
+    if: needs.build.outputs.released == 'true' && needs.build.outputs.version != '0.0.0'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # push the tag + create the GitHub Release
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - name: Validate version
+        shell: bash
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version '${VERSION}' read from pyproject.toml is not X.Y.Z; refusing to publish."
+            exit 1
+          fi
+          if [ "$VERSION" = "0.0.0" ]; then
+            echo "::error::0.0.0 is the unreleased placeholder version; refusing to publish."
+            exit 1
+          fi
+
+      - name: Download built distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Check the PyPI token is available
+        shell: bash
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_Token_General }}
+        run: |
+          if [ -z "$PYPI_TOKEN" ]; then
+            echo "::error::Secret PYPI_Token_General is empty or not available to this repository; nothing was published."
+            exit 1
+          fi
+
+      - name: Publish to PyPI (organisation API token)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_Token_General }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag and create GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          v="v${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$v"
+          git push origin "$v"                 # tag ref -- not covered by the branch ruleset
+          gh release create "$v" --title "$v" --generate-notes

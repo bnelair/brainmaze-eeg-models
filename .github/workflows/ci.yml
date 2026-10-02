@@ -1,0 +1,23 @@
+name: CI
+
+on: [push, pull_request]
+
+# Tests only read the repository.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: bnelair/brainmaze-sphinx/.github/workflows/test.yml@main
+    with:
+      package-import-name: brainmaze_eeg_models
+      # Oldest supported stack and newest one (family default). onnxruntime >= 1.24 has no
+      # Python 3.10 wheels, so the 3.10 job resolves onnxruntime 1.23.x.
+      versions: '[{"python": "3.10", "numpy": "<2"}, {"python": "3.12", "numpy": ">=2"}]'
+      # Fail if the wheel/sdist contain anything but the package (no tests, demos, docs,
+      # data); see brainmaze-sphinx check-dist.yml.
+      dist-check: error
+      # The trained ONNX models are the only non-code files the package may ship. Each model
+      # is also listed in `required-assets` (here AND in release.yml) once it is added, so
+      # the check fails if it drops out of the wheel or the sdist.
+      allowed-assets: brainmaze_eeg_models/*/_models/*.onnx

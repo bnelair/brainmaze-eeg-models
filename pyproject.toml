@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brainmaze-eeg-models"
+# 0.0.0 = unreleased placeholder. The version is owned by the release flow on main (Prepare
+# release opens the bump PR; the first release is 0.1.0). Never edit it in a normal PR.
+version = "0.0.0"
+description = "BrainMaze: ready-to-use trained EEG/iEEG models (seizure probability, sleep spindles) on ONNX Runtime"
+authors = [
+    { name = "Filip Mivalt", email = "mivalt.filip@mayo.edu" }
+]
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    # Inference only, CPU build. >= 1.19: built against numpy 2 (works with numpy 1.24+ too).
+    # onnxruntime >= 1.24 has no Python 3.10 wheels; pip then picks 1.23.x there.
+    # For NVIDIA GPUs use the [gpu] extra and read "GPU" in README.md: onnxruntime and
+    # onnxruntime-gpu install the same `onnxruntime` module and must not both be installed.
+    "onnxruntime>=1.19",
+    # Gap (NaN) handling: brainmaze_utils.gaps (new in 3.0.0).
+    "brainmaze-utils>=3.0.0",
+]
+license = { text = "BSD-3-Clause" }
+classifiers = [
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: BSD License",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Science/Research",
+]
+urls = { "Homepage" = "https://github.com/bnelair/brainmaze-eeg-models", "Documentation" = "https://bnelair.github.io/brainmaze-eeg-models/" }
+
+[project.optional-dependencies]
+# NVIDIA GPU inference (CUDA execution provider). onnxruntime-gpu provides the same
+# `onnxruntime` module as the CPU package: after installing this extra, uninstall the CPU
+# package and reinstall the GPU one (see "GPU" in README.md). CUDA/cuDNN must match the
+# onnxruntime-gpu build (onnxruntime-gpu >= 1.30 on PyPI: CUDA 13 + cuDNN 9; the
+# `onnxruntime-gpu[cuda,cudnn]` extras install them as pip packages).
+gpu = [
+    "onnxruntime-gpu>=1.19",
+]
+test = [
+    "pytest>=8.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+# Ship only the package itself (tests/, docs_src/, img/, demos and dev tools never reach the
+# wheel).
+include = ["brainmaze_eeg_models", "brainmaze_eeg_models.*"]
+exclude = ["brainmaze_eeg_models.tests", "brainmaze_eeg_models.tests.*"]
+
+[tool.setuptools.package-data]
+# The trained ONNX models are required at runtime and ship in the wheel and the sdist. They
+# are the ONLY non-Python files in the release, and each one is also listed in
+# `required-assets` in .github/workflows/{ci,release}.yml, so CI fails if one drops out.
+"brainmaze_eeg_models" = ["*/_models/*.onnx"]
+
+[tool.setuptools]
+# Only the package-data listed above; the sdist is trimmed by MANIFEST.in.
+include-package-data = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

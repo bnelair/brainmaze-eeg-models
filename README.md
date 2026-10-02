@@ -7,3 +7,5 @@ Ready-to-use trained models for brain electrophysiology (EEG/iEEG), part of the
 Status: under construction. It will host the seizure-probability model (successor of
 [brainmaze-torch](https://github.com/bnelair/brainmaze-torch)) and the OpenSpindleNet sleep-spindle
 detector.
+
+Releases follow the BrainMaze family process: see [RELEASING.md](RELEASING.md).
