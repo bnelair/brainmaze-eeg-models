@@ -51,18 +51,36 @@ not merge a PR it flags.
   information" / "project-scoped token is not valid for project"). The publish job then fails
   at the upload step; nothing is published or tagged.
 
-**Fallback: a PyPI "pending trusted publisher".** A pending publisher lets a GitHub workflow
-create a project that does not exist yet, without any token:
+Two ways out, in order of preference. In both, **don't re-run the failed run**: *Re-run
+failed jobs* re-runs the same commit with the same workflow file, so it repeats the 403
+(unless only the token itself changed, e.g. its scope was extended; secrets are read again on a
+re-run).
+
+**A. Upload the failed run's build by hand (no workflow change).** The failed run already built
+and checked the exact files; nothing was published or tagged.
+
+1. Download its `dist` artifact: `gh run download <run-id> -n dist -D dist` (kept 90 days).
+2. An owner of the bnelair PyPI projects uploads it once with a token that may create projects
+   (an account-wide token): `twine upload dist/*` (user `__token__`).
+3. Tag the commit that run built (the run's head SHA) and create the release by hand, as in the
+   "tag push" row of the recovery table below.
+4. For later releases, extend `PYPI_Token_General`'s scope to the new project (or replace it by
+   a project-scoped token); `release.yml` then works unchanged.
+
+**B. A PyPI "pending trusted publisher" + a workflow PR.** A pending publisher lets a GitHub
+workflow create a project that does not exist yet, without any token:
 
 1. On PyPI, log in as an owner of the bnelair projects, open
    **Your account → Publishing → Add a new pending publisher → GitHub**, and enter:
    PyPI project name `brainmaze-eeg-models`, owner `bnelair`, repository `brainmaze-eeg-models`,
    workflow name `release.yml`, environment name empty.
-2. In `.github/workflows/release.yml`, `publish` job: add `id-token: write` to its
-   `permissions`, remove the "Check the PyPI token is available" step and remove the
-   `password:` input of the "Publish to PyPI" step (in a normal PR).
-3. If a Release run had already failed at the upload, **re-run its failed jobs** (see the
-   recovery table below; nothing was published, so this is safe).
+2. Open a normal PR that changes `.github/workflows/release.yml`, `publish` job: add
+   `id-token: write` to its `permissions`, remove the "Check the PyPI token is available" step
+   and remove the `password:` input of the "Publish to PyPI" step.
+3. **Merging that PR is the release**: the merge starts a new *Release* run on the merge
+   commit, and because `vX.Y.Z` is still untagged that run publishes and tags `X.Y.Z` from the
+   merge commit (same package content; only the workflow file changed). Watch that run; do
+   not re-run the old failed one.
 
 After the first upload the pending publisher becomes a normal trusted publisher of the
 project. The maintainer can keep Trusted Publishing (as brainmaze-eeg and brainmaze-utils do)
@@ -78,7 +96,7 @@ the version). Go by the step that failed (full table:
 
 | failed step | state | what to do |
 |---|---|---|
-| guard / test / build / artifact check, or the token check / upload | nothing published or tagged | Fix the cause (e.g. the token secret or its scope, see above), then **Re-run failed jobs** on that same run (possible for 30 days; the `dist` artifact is kept 90 days). |
+| guard / test / build / artifact check, or the token check / upload | nothing published or tagged | If the cause is outside the repository (a flaky runner, the token secret's value or scope, see above), fix it and **Re-run failed jobs** on that same run (possible for 30 days; the `dist` artifact is kept 90 days). If the fix needs a change to the code or a workflow file, a re-run does not see it (it reruns the same commit and workflow file): merge the fix in a PR instead; the merge starts a new *Release* run that publishes the still-untagged version. |
 | tag push, after a successful upload | PyPI has X.Y.Z, no tag | Do **not** re-run: PyPI files are immutable, so the upload step would fail. Tag the commit that run built (the run's head SHA) by hand: `git tag vX.Y.Z <sha> && git push origin vX.Y.Z`, then `gh release create vX.Y.Z --verify-tag --title vX.Y.Z --generate-notes`. |
 | upload half-succeeded (some files on PyPI, e.g. wheel but not sdist) | PyPI has some files of X.Y.Z, no tag | **Re-run failed jobs** fails (PyPI rejects the files already there) and the workflow deliberately has no `skip-existing`. Download the `dist` artifact of the failed run (`gh run download <run-id> -n dist -D dist`; it is the exact build) and upload only the missing files: `twine upload dist/<missing-file>` (token `PYPI_Token_General`, user `__token__`). Check on PyPI that all files are present, then tag the run's head SHA by hand and create the release as in the tag-push row. |
 | `gh release create`, after the tag push | PyPI + tag, no GitHub Release | `gh release create vX.Y.Z --verify-tag --title vX.Y.Z --generate-notes`. |
@@ -92,19 +110,19 @@ the version). Go by the step that failed (full table:
 | thin callers of [brainmaze-sphinx](https://github.com/bnelair/brainmaze-sphinx) | `ci.yml` (tests + artifact check), `docs.yml` (GitHub Pages), `prepare-release.yml` |
 | with local logic | `release.yml`: calls the shared guard + test + build + artifact check, then its own `publish` job checks the token, uploads to PyPI, pushes the tag and creates the GitHub Release (skipped for the placeholder `0.0.0`). `version-guard.yml`: entirely local. |
 | PyPI upload | org-level Actions secret `PYPI_Token_General` (API token), used only by the publish job in `release.yml` |
-| release artifacts | only the package and its trained models `brainmaze_eeg_models/*/_models/*.onnx` (`allowed-assets`); every model is listed in `required-assets` in `ci.yml` **and** `release.yml`, so a model missing from the wheel or the sdist fails CI. Tests, docs, demos, the export tooling and sample data never ship. |
+| release artifacts | only the package and its trained models `brainmaze_eeg_models/*/_models/*.onnx` (`allowed-assets`); every model is listed in `required-assets` in `ci.yml` **and** `release.yml` (added there by the PR that adds the model; `tests/test_package.py` checks that both lists equal the shipped `.onnx` files), so a model missing from the wheel or the sdist fails CI. Tests, docs, demos, the export tooling and sample data never ship. |
 
 `ci.yml` and `release.yml` pass `dist-check`, `allowed-assets` and `required-assets`, which the
-shared workflows accept from [brainmaze-sphinx#4](https://github.com/bnelair/brainmaze-sphinx/pull/4)
-on. Until that PR is merged, CI shows **startup_failure** (undeclared inputs); this is expected.
+shared workflows accept since [brainmaze-sphinx#4](https://github.com/bnelair/brainmaze-sphinx/pull/4).
 
 ## Publishing credentials
 
 By maintainer decision (as for brainmaze-torch and brainmaze-zmq), `release.yml` publishes with
 the organisation API token `PYPI_Token_General` (brainmaze-eeg and brainmaze-utils use Trusted
 Publishing). The repository itself has no Actions secrets, so the token is an
-organisation-level secret that must be **shared with this repository** (organisation settings →
-Secrets and variables → Actions → `PYPI_Token_General` → repository access). The publish job
+organisation-level secret shared with this repository (organisation settings → Secrets and
+variables → Actions → `PYPI_Token_General` → repository access; already the case on
+2026-10-02). The publish job
 first checks that the secret is non-empty and fails with a clear error otherwise; nothing is
 published or tagged in that case. See "First release" above for the token scope.
 

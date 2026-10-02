@@ -18,8 +18,9 @@ dependencies = [
     "scipy>=1.10",
     # Inference only, CPU build. >= 1.19: built against numpy 2 (works with numpy 1.24+ too).
     # onnxruntime >= 1.24 has no Python 3.10 wheels; pip then picks 1.23.x there.
-    # For NVIDIA GPUs use the [gpu] extra and read "GPU" in README.md: onnxruntime and
-    # onnxruntime-gpu install the same `onnxruntime` module and must not both be installed.
+    # NVIDIA GPUs: there is deliberately NO [gpu] extra. onnxruntime and onnxruntime-gpu install
+    # the same `onnxruntime` module; with both installed the CPU build silently wins. Swap the
+    # package by hand instead (recipe in the runtime module docstring / "GPU" in the docs).
     "onnxruntime>=1.19",
     # Gap (NaN) handling: brainmaze_utils.gaps (new in 3.0.0).
     "brainmaze-utils>=3.0.0",
@@ -42,14 +43,6 @@ classifiers = [
 urls = { "Homepage" = "https://github.com/bnelair/brainmaze-eeg-models", "Documentation" = "https://bnelair.github.io/brainmaze-eeg-models/" }
 
 [project.optional-dependencies]
-# NVIDIA GPU inference (CUDA execution provider). onnxruntime-gpu provides the same
-# `onnxruntime` module as the CPU package: after installing this extra, uninstall the CPU
-# package and reinstall the GPU one (see "GPU" in README.md). CUDA/cuDNN must match the
-# onnxruntime-gpu build (onnxruntime-gpu >= 1.30 on PyPI: CUDA 13 + cuDNN 9; the
-# `onnxruntime-gpu[cuda,cudnn]` extras install them as pip packages).
-gpu = [
-    "onnxruntime-gpu>=1.19",
-]
 test = [
     "pytest>=8.2",
     # Reference implementations for the golden / parity tests (never needed at runtime):
