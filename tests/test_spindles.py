@@ -47,7 +47,9 @@ def test_wavefun_matches_pywt():
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
-def test_scalogram_matches_pywt_precision10(dtype):
+def test_scalogram_matches_pywt_precision10_float64_path(dtype):
+    # float32 input is compared with pywt's FLOAT64 path (x cast before pywt.cwt): the port always
+    # computes in float64. pywt's own float32 path (used in training) differs slightly; see _cwt.py.
     pywt = pytest.importorskip("pywt")
     rng = np.random.default_rng(3)
     xs = np.stack([GOLDEN["eeg_x"], GOLDEN["ieeg_x"], 40 * rng.standard_normal(WINDOW)]).astype(dtype)
@@ -122,6 +124,10 @@ def test_default_settings_find_the_same_spindles_on_the_samples(detectors, kind)
         ref = ref[~((ref[:, 0] < ne[:, 1].max()) & (ref[:, 1] > ne[:, 0].min()))]
     m = _iou_matrix(ref, ours)
     assert (m.max(axis=1) >= 0.8).all()
+    if kind == "eeg":   # #3 R3: defaults (demean on) = the original: no extra detections, conf within 0.01
+        assert ours.shape == ref.shape
+        np.testing.assert_allclose(ours[:, :2], ref[:, :2], atol=0.5)
+        np.testing.assert_allclose(ours[:, 2], ref[:, 2], atol=0.01)
 
 
 def test_dc_offset_does_not_change_detections(detectors):
@@ -153,6 +159,80 @@ def test_original_quirk_drops_spindle_at_window_start():
     det[0] = [0.9, 0.1, 0.5]                          # centre 25 samples, 1 s long -> clipped start 0
     iv = interval_nms(decode_window(det))
     assert iv.shape == (1, 3) and iv[0, 0] == 0 and iv[0, 1] == pytest.approx(150.0)
+
+
+# --- golden, multi-window (#3 R3): 6 min of a scalp night, original run window by window -----
+
+LONG = np.load(os.path.join(os.path.dirname(__file__), "data", "spindle_golden_long.npz"))
+
+
+def _long_ours(kind, **kw):
+    res = SpindleDetector(kind, device="cpu", **kw).detect(LONG["x"].astype(np.float64), 250.0)
+    assert res.evaluated_fraction(0) == 1.0
+    iv = res.channel_intervals(0)
+    iv[:, :2] *= FS
+    return iv
+
+
+def _split_window_starts(iv):
+    """The original drops spindles starting exactly at a window's first sample (documented)."""
+    ws = iv[:, 0] % WINDOW == 0
+    return iv[~ws], iv[ws]
+
+
+@pytest.mark.parametrize("kind", KINDS)
+def test_long_recording_matches_original_window_by_window(kind):
+    # pure pipeline (step = window, no demean, no flat check) == openspindlenet on each window
+    ours, extra = _split_window_starts(_long_ours(kind, step_s=30, demean=False, flat_s=None))
+    ref = LONG[f"{kind}_intervals"]
+    assert len(ref) > 20 and len(extra) <= 2
+    assert ours.shape == ref.shape
+    np.testing.assert_allclose(ours[:, :2], ref[:, :2], atol=1e-2)
+    np.testing.assert_allclose(ours[:, 2], ref[:, 2], atol=1e-5)
+
+
+@pytest.mark.parametrize("kind", KINDS)
+def test_long_recording_default_settings_match_original(kind):
+    # every default except the window step (the original tiles windows without overlap):
+    # demean='auto' (on for eeg, off for ieeg), flat_s=0.5, gap handling, ownership, NMS
+    ours, extra = _split_window_starts(_long_ours(kind, step_s=30))
+    ref = LONG[f"{kind}_intervals"]
+    assert ours.shape == ref.shape and len(extra) <= 2
+    if kind == "eeg":     # demeaning: same spindles, edges within half a sample, conf within 0.01
+        np.testing.assert_allclose(ours[:, :2], ref[:, :2], atol=0.5)
+        np.testing.assert_allclose(ours[:, 2], ref[:, 2], atol=0.01)
+    else:                 # 'ieeg' defaults = the original pipeline
+        np.testing.assert_allclose(ours[:, :2], ref[:, :2], atol=1e-2)
+        np.testing.assert_allclose(ours[:, 2], ref[:, 2], atol=1e-5)
+
+
+@pytest.mark.parametrize("kind", KINDS)
+def test_long_recording_full_defaults_agree_with_original(kind):
+    # step_s=20 (overlapping windows) sees different context at window edges, so not identical;
+    # measured recall/precision vs the original (IoU >= 0.3): eeg 0.96/0.94, ieeg 0.89/0.89
+    ours = _long_ours(kind)
+    ref = LONG[f"{kind}_intervals"]
+    m = _iou_matrix(ref, ours)
+    assert (m.max(axis=1) >= 0.3).mean() >= 0.85 and (m.max(axis=0) >= 0.3).mean() >= 0.85
+
+
+def test_long_recording_matches_live_original():
+    try:
+        osn, inference, _ = osn_reference.load_openspindlenet()
+    except ImportError:
+        pytest.skip("openspindlenet (the original package) is not installed")
+    pytest.importorskip("pywt")
+    x = LONG["x"].astype(np.float64)
+    ref = []
+    with osn_reference.pywt_precision10():
+        for k in range(x.size // WINDOW):
+            iv = _sorted(osn.detect(x[k * WINDOW:(k + 1) * WINDOW], model_type="eeg")["detection_intervals"])
+            iv[:, :2] += k * WINDOW
+            ref.append(iv)
+    ref = _sorted(np.vstack(ref))
+    np.testing.assert_allclose(ref, LONG["eeg_intervals"], atol=1e-5)     # the frozen file is current
+    ours, _ = _split_window_starts(_long_ours("eeg", step_s=30, demean=False, flat_s=None))
+    np.testing.assert_allclose(ours[:, :2], ref[:, :2], atol=1e-2)
 
 
 # --- long recordings: windows, resampling, channels ------------------------------------
@@ -227,12 +307,71 @@ def test_resampled_input_gives_same_spindles(detectors, fs):
     assert (m.max(axis=1) >= 0.5).mean() > 0.9 and (m.max(axis=0) >= 0.5).mean() > 0.9
 
 
-@pytest.mark.parametrize("fs", [250.0, 256.0, 500.0, 512.0, 1000.0, 1024.0, 200.0, 499.907, 32556.0, 30000.0, 2048.0])
+@pytest.mark.parametrize("fs", [250.0, 256.0, 500.0, 512.0, 1000.0, 1024.0, 200.0, 499.907, 32556.0, 30000.0,
+                                2048.0, 50.0, 100.0, 1e6, 30000.5])
 def test_resample_ratio_is_accurate(fs):
     up, down, fs_out = _resample_ratio(fs)
+    assert up >= 1 and down >= 1 and max(up, down) <= 10 ** 5
     assert abs(fs_out - 250) / 250 <= 1e-4 and fs_out == pytest.approx(fs * up / down)
     if fs == 250:
         assert up == down == 1
+
+
+@pytest.mark.parametrize("fs, ratio", [(256.0, (125, 128)), (2048.0, (125, 1024)), (512.0, (125, 256)),
+                                       (32556.0, (125, 16278)), (32768.0, (125, 16384)), (200.0, (5, 4)),
+                                       (50.0, (5, 1)), (30000.0, (1, 120)), (1e6, (1, 4000))])
+def test_resample_ratio_is_exact_when_possible(fs, ratio):
+    # #3 R4: 256 Hz used to give 83/85 and 2048 Hz 99/811 (within 1e-4, but not exact)
+    up, down, fs_out = _resample_ratio(fs)
+    assert (up, down) == ratio and fs_out == 250.0
+
+
+@pytest.mark.parametrize("fs", [5e7, 1e9])
+def test_resample_ratio_unrepresentable_raises(fs):
+    # #3 R4: 5e7 Hz used to give up == 0 and an opaque resample_poly error
+    with pytest.raises(ValueError, match="downsample the recording first"):
+        _resample_ratio(fs)
+
+
+def test_low_rates_down_to_50_hz_are_accepted(detectors):
+    # #3 R6: 50 Hz DREAMS recordings were in the eeg model's training data (upsampled to 250 Hz)
+    from scipy.signal import resample_poly
+    x = _long_signal(4)
+    a = detectors["eeg"].detect(x, 250).channel_intervals(0)
+    for fs, (up, down) in ((100.0, (2, 5)), (50.0, (1, 5))):
+        res = detectors["eeg"].detect(resample_poly(x, up, down), fs)
+        assert res.params["resample"] == ((5, 2) if fs == 100 else (5, 1)) and res.params["fs_model"] == 250.0
+        b = res.channel_intervals(0)
+        assert len(b) > 0.5 * len(a)                       # spindles (11-16 Hz) survive 50 Hz sampling
+        m = _iou_matrix(a, b)
+        assert (m.max(axis=0) >= 0.3).mean() > 0.7         # and are mostly the same ones
+
+
+# --- demean (#3 R2) --------------------------------------------------------------------
+
+def test_demean_auto_follows_each_models_training():
+    assert SpindleDetector("eeg", device="cpu").demean is True
+    assert SpindleDetector("ieeg", device="cpu").demean is False
+    assert SpindleDetector("ieeg", device="cpu", demean=True).demean is True
+    assert SpindleDetector("eeg", device="cpu", demean=False).demean is False
+    for bad in ("yes", None, 1, "on"):
+        with pytest.raises(ValueError, match="demean"):
+            SpindleDetector("eeg", device="cpu", demean=bad)
+
+
+def test_large_offset_without_demean_warns_and_is_recorded():
+    x = _long_signal(4)
+    det = SpindleDetector("ieeg", device="cpu")                # demean off (auto)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        res = det.detect(x, 250)                               # ~0 SD offset: no warning
+    assert res.params["demean"] is False and res.params["max_abs_offset_sd"] < 1
+    with pytest.warns(RuntimeWarning, match="DC offset"):
+        res = det.detect(x + 10 * x.std(), 250)
+    assert res.params["max_abs_offset_sd"] > 5
+    with warnings.catch_warnings():                            # demean on: offsets are harmless
+        warnings.simplefilter("error")
+        SpindleDetector("ieeg", device="cpu", demean=True).detect(x + 10 * x.std(), 250)
 
 
 # --- gaps -------------------------------------------------------------------------------
@@ -293,6 +432,46 @@ def test_flat_runs_are_gaps(detectors):
     assert not np.any((iv[:, 0] < ne[0, 1]) & (iv[:, 1] > ne[0, 0]))
 
 
+def test_flat_runs_are_constant_runs_not_staircases():
+    # #3 R1: adjacent plateaus of different values are separate runs, never one long "flat" run
+    stair = np.repeat(np.arange(10.0), 2)                          # 0,0,1,1,2,2,...
+    runs = _flat_runs(stair, 4.0, 0.5)                             # n_min = 2 samples
+    np.testing.assert_array_equal(runs, np.column_stack([np.arange(0, 20, 2), np.arange(2, 21, 2)]))
+    assert _flat_runs(stair, 4.0, 0.75).size == 0                  # n_min = 3: no run is that long
+    x = np.array([1, 2, 2, 2, 3, 3, 4, np.nan, np.nan, np.nan, 5, 5, 5], dtype=float)
+    np.testing.assert_array_equal(_flat_runs(x, 1.0, 3.0), [[1, 4], [10, 13]])   # NaN runs are not flat runs
+    assert all(np.ptp(x[a:b]) == 0 for a, b in _flat_runs(x, 1.0, 2.0))
+
+
+def test_sample_repeated_recording_is_not_a_gap(detectors):
+    # #3 R1: a 250 Hz signal stored at 500 Hz by repeating every sample (sample-and-hold export)
+    # used to be one "flat run" (0 spindles, evaluated 0.0)
+    x = _long_signal(4)
+    a = detectors["eeg"].detect(x, 250)
+    b = detectors["eeg"].detect(np.repeat(x, 2), 500)
+    assert b.evaluated_fraction(0) == 1.0 and b.not_evaluated[0].size == 0
+    ia, ib = a.channel_intervals(0), b.channel_intervals(0)
+    assert len(ia) > 10
+    m = _iou_matrix(ia, ib)                                        # same spindles, up to resampling
+    assert (m.max(axis=1) >= 0.5).mean() > 0.9 and (m.max(axis=0) >= 0.5).mean() > 0.9
+
+
+@pytest.mark.parametrize("fs2, lsb", [(2048, 50), (8192, 10), (32768, 2)])
+def test_oversampled_quantised_signal_has_no_false_flat_runs(fs2, lsb):
+    # #3 R1: slowly varying, oversampled, coarsely quantised iEEG-like data (std ~300)
+    from scipy.signal import resample_poly
+    rng = np.random.default_rng(11)
+    x = np.cumsum(rng.standard_normal(2048 * 60))
+    x = 300 * (x - x.mean()) / x.std()                             # brown noise, 60 s at 2048 Hz
+    y = resample_poly(x, fs2 // 2048, 1) if fs2 != 2048 else x
+    q = np.round(y / lsb) * lsb
+    for a, b in _flat_runs(q, fs2, 0.5):
+        assert np.ptp(q[a:b]) == 0                                 # only truly constant runs
+    assert _flat_runs(q, fs2, 0.5).size == 0
+    q[fs2 * 10:fs2 * 12] = q[fs2 * 10]                             # a real 2 s dropout is still found
+    np.testing.assert_array_equal(_flat_runs(q, fs2, 0.5)[:, 1], [fs2 * 12])
+
+
 def test_inf_is_a_gap(detectors):
     x = _long_signal(4)
     y = x.copy()
@@ -307,8 +486,8 @@ def test_input_validation(detectors):
     det = detectors["eeg"]
     with pytest.raises(ValueError, match="at least 30"):
         det.detect(np.zeros(250 * 29), 250)
-    with pytest.raises(ValueError, match=">= 100"):
-        det.detect(np.zeros(5000), 50)
+    with pytest.raises(ValueError, match=">= 50"):
+        det.detect(np.zeros(5000), 49.9)
     with pytest.raises(ValueError):
         det.detect(np.zeros((2, 2, 8000)), 250)
     with pytest.raises(ValueError, match="NaN"):

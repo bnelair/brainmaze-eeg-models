@@ -17,6 +17,6 @@ Copyright (c) 2025 CaptainTrojan; full notice in NOTICE.md). Please cite
 Seják et al., Computers in Biology and Medicine 197 (2025) 110854.
 """
 from ._cwt import scalogram
-from ._detector import FS, MODELS, WINDOW, SpindleDetections, SpindleDetector
+from ._detector import DEMEAN_AUTO, FS, MODELS, WINDOW, SpindleDetections, SpindleDetector
 
-__all__ = ['SpindleDetector', 'SpindleDetections', 'scalogram', 'MODELS', 'FS', 'WINDOW']
+__all__ = ['SpindleDetector', 'SpindleDetections', 'scalogram', 'MODELS', 'FS', 'WINDOW', 'DEMEAN_AUTO']
