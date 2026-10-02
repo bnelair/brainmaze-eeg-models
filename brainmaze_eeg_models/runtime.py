@@ -157,6 +157,8 @@ class OnnxModel:
         default (one per physical core). Also used for the CPU parts of a CUDA session.
     batch_size : int
         Default number of items per inference call in :meth:`run`.
+    cuda_device_id : int
+        Index of the GPU used with ``device='cuda'`` / ``'auto'`` (default 0).
     cuda_tf32 : bool
         Allow TF32 matrix maths on the GPU. Default False: ONNX Runtime's CUDA provider enables
         TF32 by default, which changes results at the ~1e-3 level (not the ~1e-6 of float32
@@ -168,7 +170,8 @@ class OnnxModel:
     """
 
     def __init__(self, path: str, *, device: str = 'auto', threads: int | None = None,
-                 batch_size: int = 32, cuda_tf32: bool = False, sha256: str | None = None,
+                 batch_size: int = 32, cuda_device_id: int = 0, cuda_tf32: bool = False,
+                 sha256: str | None = None,
                  name: str | None = None):
         if device not in DEVICES:
             raise ValueError(f"device must be one of {DEVICES}, got {device!r}")
@@ -188,6 +191,9 @@ class OnnxModel:
                     f"(SHA-256 {digest}, expected {sha256}). Reinstall the package.")
         self.threads = None if threads is None else int(threads)
         self.cuda_tf32 = bool(cuda_tf32)
+        if isinstance(cuda_device_id, bool) or not isinstance(cuda_device_id, (int, np.integer)) or cuda_device_id < 0:
+            raise ValueError(f"cuda_device_id must be an integer >= 0, got {cuda_device_id!r}")
+        self.cuda_device_id = int(cuda_device_id)
 
         ort = _ort()
         avail = ort.get_available_providers()
@@ -228,7 +234,8 @@ class OnnxModel:
     def _make_cuda_session(self, *, strict: bool):
         _preload_cuda_libraries()
         try:
-            session = self._make_session([(_CUDA, {'use_tf32': int(self.cuda_tf32)}), _CPU])
+            session = self._make_session([(_CUDA, {'device_id': self.cuda_device_id,
+                                                   'use_tf32': int(self.cuda_tf32)}), _CPU])
         except Exception as exc:  # noqa: BLE001
             if strict:
                 raise RuntimeError(_cuda_help(f"creating the CUDA session failed: {exc}")) from exc

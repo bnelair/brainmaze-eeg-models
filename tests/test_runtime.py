@@ -95,10 +95,10 @@ def test_cuda_session_error_auto_falls_back(monkeypatch):
     with pytest.warns(RuntimeWarning):
         assert OnnxModel(TINY, device="auto").device == "cpu"
     # TF32 is disabled on the CUDA provider unless asked for
-    assert seen[0][0] == ("CUDAExecutionProvider", {"use_tf32": 0})
+    assert seen[0][0] == ("CUDAExecutionProvider", {"device_id": 0, "use_tf32": 0})
     with pytest.raises(RuntimeError):
-        OnnxModel(TINY, device="cuda", cuda_tf32=True)
-    assert seen[-1][0] == ("CUDAExecutionProvider", {"use_tf32": 1})
+        OnnxModel(TINY, device="cuda", cuda_tf32=True, cuda_device_id=1)
+    assert seen[-1][0] == ("CUDAExecutionProvider", {"device_id": 1, "use_tf32": 1})
 
 
 def test_threads_option():
@@ -108,7 +108,8 @@ def test_threads_option():
 
 
 @pytest.mark.parametrize("kw", [dict(device="gpu"), dict(threads=0), dict(threads=1.5), dict(threads=True),
-                                dict(batch_size=0), dict(batch_size=2.0)])
+                                dict(batch_size=0), dict(batch_size=2.0),
+                                dict(cuda_device_id=-1), dict(cuda_device_id=True)])
 def test_bad_arguments(kw):
     with pytest.raises(ValueError):
         OnnxModel(TINY, **kw)
