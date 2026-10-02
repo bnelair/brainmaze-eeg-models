@@ -1,7 +1,7 @@
 """
 Vectorised, batched continuous wavelet transform used by the spindle detector.
 
-It computes exactly what OpenSpindleNet (and its training code, mayo_spindles) computed with
+It computes, in float64, what OpenSpindleNet 0.1.1 computes at inference time with
 PyWavelets::
 
     np.abs(pywt.cwt(x, np.geomspace(135, 270, num=15), 'shan6-13', sampling_period=1/250)[0])
@@ -11,6 +11,15 @@ with the wavelet sampled at ``precision = 10`` (2**10 points on [-20, 20]), whic
 default, which changes the scalogram substantially for this wavelet (13 cycles per unit are
 aliased at 2**10 points over 40 units); the models were trained on the precision-10 version,
 so it is pinned here and PyWavelets is not needed at runtime.
+
+**Training used pywt's float32 path.** The training code (mayo_spindles) fed float32 signals,
+and ``pywt.cwt`` then builds the kernel index grid with a float32 step, so 1-102 kernel
+indices per scale differ from the float64 kernel used here (and by OpenSpindleNet's own
+inference on float64 input). Measured on the two OpenSpindleNet sample windows: the
+normalised scalogram differs by up to 0.57 SD (eeg) / 5.4 SD (ieeg) at single samples, the
+model outputs by <= 0.006, and the detected intervals are identical. That is much smaller
+than the precision-12 vs precision-10 difference; this module deliberately reproduces the
+float64 path (the original package's runtime behaviour, pinned by the golden tests).
 
 Instead of one ``np.convolve`` per scale and window (about 1 s per 30 s window), the
 convolution of every window with every scale is done with FFTs in one batch. The result

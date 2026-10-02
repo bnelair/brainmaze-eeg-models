@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from dataclasses import dataclass, field
 from fractions import Fraction
 
@@ -14,7 +15,7 @@ from ..runtime import OnnxModel
 from ._cwt import scalogram
 from ._decode import SEGMENTS, decode_window, interval_nms, sigmoid
 
-__all__ = ['SpindleDetector', 'SpindleDetections', 'MODELS', 'FS', 'WINDOW']
+__all__ = ['SpindleDetector', 'SpindleDetections', 'MODELS', 'FS', 'WINDOW', 'DEMEAN_AUTO']
 
 FS = 250.0            # model sampling rate (Hz)
 WINDOW = 7500         # model input length (samples) = 30 s at 250 Hz
@@ -27,7 +28,12 @@ MODELS = {
     'ieeg': ('spindle-detector-ieeg.onnx', '75291ee435ff08360f869ee7279f00d61de557d2a37c57d860f1257e228ba0e8'),
 }
 
-_RESAMPLE_RTOL = 1e-4     # max relative error of the rational resampling ratio
+_RESAMPLE_RTOL = 1e-4     # max relative error of an approximate rational resampling ratio
+_RESAMPLE_MAX = 10 ** 5   # max up/down factor of resample_poly (its FIR has ~20 * max taps)
+FS_MIN = 50.0             # lowest accepted sampling rate (DREAMS excerpt 3, in the eeg training set)
+#: demean='auto': per model, what matches its training data (see SpindleDetector, ``demean``).
+DEMEAN_AUTO = {'eeg': True, 'ieeg': False}
+_OFFSET_WARN_SD = 5.0     # warn (demean off) when a window's |mean| exceeds this many SDs
 
 
 @dataclass(frozen=True)
@@ -102,29 +108,46 @@ def _merge_intervals(iv: np.ndarray) -> np.ndarray:
 
 
 def _flat_runs(x: np.ndarray, fs: float, flat_s: float) -> np.ndarray:
-    """``[start, stop)`` sample indices of runs of identical finite values lasting >= flat_s."""
+    """``[start, stop)`` sample indices of constant runs (one finite value repeated) lasting >= flat_s.
+
+    A run is a stretch of *pairwise* equal consecutive samples: ``x[i] == x[i + 1]`` for every
+    ``i`` in it. Adjacent plateaus of different values (a staircase, e.g. sample-and-hold
+    upsampling or coarse quantisation) are therefore separate runs, never one.
+    """
     n_min = max(2, int(np.ceil(flat_s * fs)))
     if x.size < n_min:
         return np.empty((0, 2), dtype=np.int64)
-    same = np.zeros(x.size, dtype=bool)
-    eq = (x[1:] == x[:-1]) & np.isfinite(x[1:])
-    same[1:] = eq
-    same[:-1] |= eq
-    d = np.diff(np.concatenate(([0], same.astype(np.int8), [0])))
-    starts, stops = np.flatnonzero(d == 1), np.flatnonzero(d == -1)
-    keep = (stops - starts) >= n_min
-    return np.column_stack([starts[keep], stops[keep]]).astype(np.int64)
+    eq = (x[1:] == x[:-1]) & np.isfinite(x[1:])        # eq[i]: x[i] == x[i + 1]
+    d = np.diff(np.concatenate(([0], eq.astype(np.int8), [0])))
+    a, b = np.flatnonzero(d == 1), np.flatnonzero(d == -1)   # eq[a:b] all True
+    stops = b + 1                                       # constant samples x[a:b + 1]
+    keep = (stops - a) >= n_min
+    return np.column_stack([a[keep], stops[keep]]).astype(np.int64)
 
 
 def _resample_ratio(fs: float) -> tuple[int, int, float]:
-    """``up, down, fs_out`` with ``fs * up / down`` within 1e-4 (relative) of 250 Hz."""
-    target = Fraction(FS) / Fraction(fs).limit_denominator(10 ** 9)
-    for limit in (100, 1000, 10000, 100000):
+    """``up, down, fs_out`` for :func:`scipy.signal.resample_poly` from ``fs`` to ~250 Hz.
+
+    The exact ratio is used whenever it is small enough (``max(up, down) <= 1e5``; e.g.
+    256 Hz -> 125/128, 2048 Hz -> 125/1024, 32556 Hz -> 125/16278), so ``fs_out == 250``.
+    Otherwise (e.g. a measured rate such as 499.907 Hz) the smallest-denominator ratio within
+    1e-4 (relative) of 250 Hz is used and ``fs_out`` is the resulting exact effective rate
+    (the time axis uses it, so there is no drift). Raises :class:`ValueError` if no usable
+    ratio exists (absurdly high ``fs``).
+    """
+    fr = Fraction(fs).limit_denominator(10 ** 6)
+    if float(fr) == fs:                          # fs is (a float of) a small rational number
+        exact = Fraction(FS) / fr
+        if 1 <= max(exact.numerator, exact.denominator) <= _RESAMPLE_MAX:
+            return exact.numerator, exact.denominator, FS
+    target = Fraction(FS) / Fraction(fs)
+    for limit in (100, 1000, 10000, _RESAMPLE_MAX):
         r = target.limit_denominator(limit)
-        if abs(float(r) * fs - FS) / FS <= _RESAMPLE_RTOL:
+        if r.numerator >= 1 and r.numerator <= _RESAMPLE_MAX and abs(float(r) * fs - FS) / FS <= _RESAMPLE_RTOL:
             return r.numerator, r.denominator, fs * r.numerator / r.denominator
-    r = target.limit_denominator(100000)
-    return r.numerator, r.denominator, fs * r.numerator / r.denominator
+    raise ValueError(f"cannot resample fs={fs} Hz to 250 Hz with a rational ratio of at most "
+                     f"{_RESAMPLE_MAX}; downsample the recording first (e.g. to 250-2000 Hz, with "
+                     "an anti-aliasing filter)")
 
 
 def _normalize(a: np.ndarray) -> np.ndarray:
@@ -145,7 +168,12 @@ class SpindleDetector:
     2. fills the gaps (:func:`brainmaze_utils.gaps.fill_gaps`, spectral noise) so that the
        filters and the network see a plausible background;
     3. resamples to 250 Hz with :func:`scipy.signal.resample_poly` (its polyphase FIR is the
-       anti-aliasing low-pass; cut-off at the lower Nyquist rate, 125 Hz when downsampling);
+       anti-aliasing low-pass; cut-off at the lower Nyquist rate, 125 Hz when downsampling;
+       exact ratio where one exists, e.g. 256 Hz -> 125/128). The training data were
+       resampled with ``np.interp`` (linear interpolation, no anti-aliasing); the better filter
+       does not change the results measurably: on a 6.8 h 500 Hz night 854 vs 861 spindles
+       with 93-94 % mutual agreement (the same order as step 20 s vs 30 s), on DREAMS F1 0.570
+       vs 0.572;
     4. cuts sliding 30 s windows every ``step_s`` seconds (the last one aligned to the end),
        computes the model inputs exactly as OpenSpindleNet (z-scored signal + z-scored
        'shan6-13' scalogram, see :func:`brainmaze_eeg_models.spindles.scalogram`) and runs
@@ -184,14 +212,34 @@ class SpindleDetector:
     flat_s : float or None
         Runs of identical consecutive values at least this long (s) are treated as gaps.
         ``None`` disables the check.
-    demean : bool
-        Subtract each window's mean before the scalogram (default True). The scalogram
-        kernels (up to 43 s) are longer than the window, so a DC offset leaks into every
-        scalogram sample: an offset of 10 SD of the signal already changes the confidences by
-        up to 0.5 and 100 SD suppresses most detections. Training data had small offsets
-        (typically ~0.05 SD), where demeaning changes the confidences by < 0.01.
-        ``False`` reproduces the original package exactly. Slow drifts of large amplitude
-        leak similarly: high-pass filter such recordings (e.g. 0.3-0.5 Hz) beforehand.
+    demean : {'auto', True, False}
+        Subtract each window's mean before the scalogram. The scalogram kernels (up to 43 s)
+        are longer than the window, so a DC offset leaks into every scalogram sample (the
+        z-scored raw-signal input is not affected). ``'auto'`` (default) does what matches
+        each model's training data: **on for 'eeg'**, **off for 'ieeg'**
+        (:data:`DEMEAN_AUTO`). Measured effects:
+
+        - 'eeg' (scalp data have small offsets; DREAMS <= 0.02 SD): demeaning changes nothing
+          measurable (DREAMS F1 identical, the 6.8 h demo night gives the same 854 spindles)
+          and protects against offsets, which without it change the confidences on the
+          bundled eeg sample by up to 0.01 at 2 SD and 0.13 at 10 SD, and suppress most
+          detections at 100 SD.
+        - 'ieeg': the training data were raw MEF signals (no filtering, no demeaning), so DC
+          offsets were part of the training distribution, and this model is much more
+          sensitive to them: on the bundled iEEG sample (offset -1.89 SD) an added offset of
+          0.5 / 1 / 3 / 5 SD changes the confidences by up to 0.07 / 0.10 / 0.32 / 0.57, and
+          demeaning that sample changes them by up to 0.055 (segmentation 0.25, interval
+          edges by up to 9 samples). Nobody has validated either choice on labelled iEEG, so
+          the default keeps the training behaviour.
+
+        **Limitation:** with demeaning off, the outputs depend on the recording's DC offset
+        (amplifier offset, slow drift, reference choice). :meth:`detect` records the largest
+        ``|window mean| / window SD`` of the evaluated windows in
+        ``params['max_abs_offset_sd']`` and warns when it exceeds 5 (the bundled iEEG sample,
+        from the training domain, has 1.9; 3.1 after its zero-filled dropout is filled, so a
+        few SD are in-distribution; how far the training data went is not known). For such data, high-pass filter beforehand (e.g.
+        0.3-0.5 Hz) or decide explicitly with ``demean=True``. ``False`` reproduces the
+        original package exactly.
 
     Notes
     -----
@@ -205,13 +253,28 @@ class SpindleDetector:
     - NaN input is not z-scored to zeros silently: gaps are filled, then the spindles in and
       next to them are dropped and the time is reported as not evaluated. Flat runs
       (zero-filled dropouts, disconnected or saturated channels) are treated as gaps.
-    - Each window is demeaned before the scalogram (``demean``).
+    - With the 'eeg' model each window is demeaned before the scalogram (``demean='auto'``).
+    - Any length >= 30 s and any sampling rate >= 50 Hz is accepted (the original: exactly
+      7500 samples, assumed to be at 250 Hz). Rates below 250 Hz are upsampled; spindles
+      (11-16 Hz) are below the Nyquist rate, but the scalogram's top scales (up to 24 Hz)
+      lose energy near the original Nyquist rate. The 'eeg' model's training data included
+      50, 100 and 200 Hz DREAMS recordings upsampled to 250 Hz (by linear interpolation).
 
-    - Any length >= 30 s and any sampling rate >= 100 Hz is accepted (the original: exactly
-      7500 samples, assumed to be at 250 Hz).
+    With ``flat_s=None, demean=False`` a 250 Hz input gives the same intervals as
+    ``openspindlenet`` run window by window with ``step_s=30`` (pinned by golden tests on
+    single windows and on a 6 min multi-window recording), apart from the
+    spindle-at-sample-0 case. The 'ieeg' model's defaults (``demean='auto'`` = off) give the
+    same; the 'eeg' defaults differ only through demeaning (tested: same spindles, confidence
+    differences < 0.01).
 
-    With ``flat_s=None, demean=False`` a 30 s, 250 Hz input gives the same intervals as
-    ``openspindlenet`` (pinned by golden tests), apart from the spindle-at-sample-0 case.
+    .. rubric:: Memory
+
+    Channels are processed one at a time, but each whole channel is held at its original rate
+    in float64, in a few copies (the input cast, flat-run masking, gap filling and the
+    resampler's working arrays): about 8 bytes x samples per copy, e.g. 22 GB per copy for
+    24 h at 32 kHz. For long high-rate recordings, downsample beforehand (with an
+    anti-aliasing filter, to e.g. 250-1000 Hz) or call :meth:`detect` on segments (overlap
+    them by >= 30 s and keep each segment's spindles away from its edges).
 
     .. rubric:: Credits
 
@@ -227,7 +290,7 @@ class SpindleDetector:
                  batch_size: int = 32, confidence_threshold: float = 0.5,
                  nms_iou_threshold: float = 0.3, step_s: float = 20.0,
                  min_valid_fraction: float = 0.5, gap_margin_s: float = 0.5,
-                 flat_s: float | None = 0.5, demean: bool = True):
+                 flat_s: float | None = 0.5, demean: bool | str = 'auto'):
         if model not in MODELS:
             raise ValueError(f"model must be one of {sorted(MODELS)}, got {model!r}")
         if not 0.0 <= confidence_threshold <= 1.0:
@@ -255,6 +318,13 @@ class SpindleDetector:
         self.min_valid_fraction = float(min_valid_fraction)
         self.gap_margin_s = float(gap_margin_s)
         self.flat_s = None if flat_s is None else float(flat_s)
+        if isinstance(demean, str):
+            if demean != 'auto':
+                raise ValueError(f"demean must be 'auto', True or False, got {demean!r}")
+            demean = DEMEAN_AUTO[model]
+        elif not isinstance(demean, (bool, np.bool_)):
+            raise ValueError(f"demean must be 'auto', True or False, got {demean!r}")
+        #: resolved setting (bool): whether each window is demeaned before the scalogram
         self.demean = bool(demean)
 
     @property
@@ -314,7 +384,7 @@ class SpindleDetector:
             Signal (any units, e.g. uV); NaN/inf mark missing data. At least 30 s long.
             Channels are processed independently (time on the last axis).
         fs : float
-            Sampling rate (Hz), >= 100.
+            Sampling rate (Hz), >= 50 (see the class notes for rates below 250 Hz).
 
         Returns
         -------
@@ -326,8 +396,8 @@ class SpindleDetector:
         if not np.issubdtype(x.dtype, np.number) or np.iscomplexobj(x):
             raise ValueError(f"x must be a real numeric array, got dtype {x.dtype}")
         fs = float(fs)
-        if not np.isfinite(fs) or fs < 100:
-            raise ValueError(f"fs must be a finite sampling rate >= 100 Hz, got {fs}")
+        if not np.isfinite(fs) or fs < FS_MIN:
+            raise ValueError(f"fs must be a finite sampling rate >= {FS_MIN:g} Hz, got {fs}")
         xs = x[None] if x.ndim == 1 else x
         n_ch, n = xs.shape
         duration = n / fs
@@ -344,12 +414,21 @@ class SpindleDetector:
         bounds = np.concatenate(([0.0], (centres[:-1] + centres[1:]) / 2, [float(m)]))
 
         # Channels one at a time: memory stays at a few copies of ONE channel.
-        out_s, out_e, out_c, out_ch, not_eval = [], [], [], [], []
+        out_s, out_e, out_c, out_ch, not_eval, offsets = [], [], [], [], [], []
         for ch in range(n_ch):
-            s_, e_, c_, ne = self._detect_channel(np.asarray(xs[ch], dtype=np.float64), fs, duration,
-                                                  up, down, fs_eff, m, starts, bounds)
+            s_, e_, c_, ne, off = self._detect_channel(np.asarray(xs[ch], dtype=np.float64), fs, duration,
+                                                       up, down, fs_eff, m, starts, bounds)
             out_s.append(s_); out_e.append(e_); out_c.append(c_); not_eval.append(ne)
             out_ch.append(np.full(s_.size, ch, dtype=np.int64))
+            offsets.append(off)
+        max_off = float(max(offsets))
+        if not self.demean and max_off > _OFFSET_WARN_SD:
+            warnings.warn(
+                f"SpindleDetector({self.model_name!r}, demean=False): an evaluated window has a mean of "
+                f"{max_off:.1f} SD of the window (channels {[c for c, o in enumerate(offsets) if o > _OFFSET_WARN_SD]}). "
+                "Without demeaning the outputs depend on the DC offset (see the 'demean' documentation); "
+                "high-pass filter the recording (e.g. 0.3-0.5 Hz) or pass demean=True explicitly.",
+                RuntimeWarning, stacklevel=2)
         return SpindleDetections(
             start=np.concatenate(out_s), end=np.concatenate(out_e), confidence=np.concatenate(out_c),
             channel=np.concatenate(out_ch), not_evaluated=tuple(not_eval), n_channels=n_ch,
@@ -358,10 +437,10 @@ class SpindleDetector:
                         confidence_threshold=self.confidence_threshold,
                         nms_iou_threshold=self.nms_iou_threshold, min_valid_fraction=self.min_valid_fraction,
                         gap_margin_s=self.gap_margin_s, flat_s=self.flat_s, demean=self.demean,
-                        n_windows=len(starts)))
+                        n_windows=len(starts), max_abs_offset_sd=max_off))
 
     def _detect_channel(self, x, fs, duration, up, down, fs_eff, m, starts, bounds):
-        """One channel: returns start, end, confidence (s) and its not-evaluated intervals."""
+        """One channel: start, end, confidence (s), not-evaluated intervals, max |window mean| / SD."""
         empty = np.empty(0)
         # 1. gaps: NaN/inf and flat runs, in seconds (on the original signal)
         gaps = np.asarray(gap_intervals(x, fs), dtype=np.float64).reshape(-1, 2)
@@ -374,7 +453,7 @@ class SpindleDetector:
                 gaps = _merge_intervals(np.vstack([gaps, fr / fs]))
         widened = gaps + np.array([-self.gap_margin_s, self.gap_margin_s])
         if not np.isfinite(x).any():
-            return empty, empty, empty, np.array([[0.0, duration]])
+            return empty, empty, empty, np.array([[0.0, duration]]), 0.0
         # 2. fill the gaps so filters and the network see a plausible background
         if len(gaps):
             x = fill_gaps(x, fs)
@@ -392,6 +471,11 @@ class SpindleDetector:
                 skipped.append([bounds[k] / fs_eff, bounds[k + 1] / fs_eff])
             else:
                 sel.append(k)
+        # DC offset of the evaluated windows (relevant when demean is off)
+        max_off = 0.0
+        for k in sel:
+            w = z[starts[k]:starts[k] + WINDOW]
+            max_off = max(max_off, abs(w.mean()) / w.std())
         # 5. inference in batches, decoding, ownership
         rows = []
         bs = self._model.batch_size
@@ -417,7 +501,7 @@ class SpindleDetector:
             s, e, c = s[keep], e[keep], c[keep]
         order = np.argsort(s, kind='stable')
         ne = _merge_intervals(np.vstack([widened, np.array(skipped).reshape(-1, 2)]))
-        return s[order], e[order], c[order], np.clip(ne, 0.0, duration)
+        return s[order], e[order], c[order], np.clip(ne, 0.0, duration), max_off
 
 
 def _bad_mask(gaps_s: np.ndarray, m: int, fs_eff: float) -> np.ndarray:
