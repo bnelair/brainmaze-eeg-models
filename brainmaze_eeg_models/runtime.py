@@ -157,6 +157,10 @@ class OnnxModel:
         default (one per physical core). Also used for the CPU parts of a CUDA session.
     batch_size : int
         Default number of items per inference call in :meth:`run`.
+    cuda_tf32 : bool
+        Allow TF32 matrix maths on the GPU. Default False: ONNX Runtime's CUDA provider enables
+        TF32 by default, which changes results at the ~1e-3 level (not the ~1e-6 of float32
+        rounding) on Ampere and newer GPUs; off, GPU and CPU outputs agree to float32 rounding.
     sha256 : str, optional
         Expected SHA-256 hex digest of the file; a mismatch raises :class:`RuntimeError`.
     name : str, optional
@@ -164,7 +168,8 @@ class OnnxModel:
     """
 
     def __init__(self, path: str, *, device: str = 'auto', threads: int | None = None,
-                 batch_size: int = 32, sha256: str | None = None, name: str | None = None):
+                 batch_size: int = 32, cuda_tf32: bool = False, sha256: str | None = None,
+                 name: str | None = None):
         if device not in DEVICES:
             raise ValueError(f"device must be one of {DEVICES}, got {device!r}")
         if threads is not None and (not isinstance(threads, (int, np.integer)) or isinstance(threads, bool)
@@ -182,6 +187,7 @@ class OnnxModel:
                     f"Model file {self.path} is corrupted or not the expected model "
                     f"(SHA-256 {digest}, expected {sha256}). Reinstall the package.")
         self.threads = None if threads is None else int(threads)
+        self.cuda_tf32 = bool(cuda_tf32)
 
         ort = _ort()
         avail = ort.get_available_providers()
@@ -216,13 +222,13 @@ class OnnxModel:
         so.log_severity_level = 3  # errors only; provider problems are reported by us
         return so
 
-    def _make_session(self, providers: Sequence[str]):
+    def _make_session(self, providers: Sequence):
         return _ort().InferenceSession(self.path, sess_options=self._options(), providers=list(providers))
 
     def _make_cuda_session(self, *, strict: bool):
         _preload_cuda_libraries()
         try:
-            session = self._make_session([_CUDA, _CPU])
+            session = self._make_session([(_CUDA, {'use_tf32': int(self.cuda_tf32)}), _CPU])
         except Exception as exc:  # noqa: BLE001
             if strict:
                 raise RuntimeError(_cuda_help(f"creating the CUDA session failed: {exc}")) from exc
