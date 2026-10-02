@@ -7,6 +7,7 @@ Ready-to-use trained models for brain electrophysiology (EEG / iEEG), part of th
 
 | model | module | input | output |
 |---|---|---|---|
+| Seizure probability, CNN + BiLSTM (iEEG; successor of [brainmaze-torch](https://github.com/bnelair/brainmaze-torch)) | `brainmaze_eeg_models.seizure` | one channel, even integer fs >= 200 Hz, >= 300 s, NaN gaps allowed | probability every 0.5 s, NaN where not evaluated |
 | OpenSpindleNet (scalp EEG / iEEG) | `brainmaze_eeg_models.spindles` | 1-D or multichannel, any fs >= 100 Hz, >= 30 s, NaN gaps allowed | spindle intervals (s) + confidence, and the time that could not be evaluated |
 
 The package is built for long, multichannel recordings with gaps: missing data never turns into
@@ -55,6 +56,23 @@ print(device_report())
 `device='cuda'` never falls back to the CPU silently: it raises an error that says what is missing.
 `device='auto'` (the default) uses CUDA when it initialises and the CPU otherwise.
 
+## Quick start: seizure probability
+
+```python
+from brainmaze_eeg_models.seizure import predict_channel_seizure_probability
+
+t, p = predict_channel_seizure_probability(x, fs, model='modelA')   # x: one channel, NaN = missing
+# t[k] = k * 0.5 s; p[k] = seizure probability of the 1 s centred on t[k]; NaN = not evaluated
+```
+
+This is the brainmaze-torch 0.2.0 pipeline, unchanged, with the model on ONNX Runtime: the same
+function names and outputs (migrating = changing the import from
+`brainmaze_torch.seizure_detection`), the brainmaze-torch golden tests pass, and the
+probabilities match PyTorch within ~1e-6. NaN means "not evaluated" (t = 0, gaps, flat
+segments), never "no seizure": use `np.nanmax` / `np.isfinite`, never `fillna(0)`. `fs` must be a
+whole, even number >= 200 Hz (resample first, with anti-aliasing). `use_cuda` now defaults to
+`'auto'`; `use_cuda=False` forces the CPU.
+
 ## Quick start: sleep spindles
 
 ```python
@@ -92,6 +110,10 @@ Demo: [`demo/spindle_detection/spindles_one_night.py`](demo/spindle_detection/sp
 threads, batching, model checksum, input validation); every model in the package uses it.
 
 ## Credits and citation
+
+**Seizure detection.** V. Sladky et al., "Distributed brain co-processor for tracking spikes,
+seizures and behaviour during electrical brain stimulation", *Brain Communications* 4(3), 2022,
+doi:10.1093/braincomms/fcac115.
 
 **OpenSpindleNet.** The spindle models and the decoding are from
 [OpenSpindleNet](https://github.com/CaptainTrojan/openspindlenet) (MIT License,

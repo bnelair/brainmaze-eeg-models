@@ -147,3 +147,11 @@ def test_input_validation():
 def test_device_report_mentions_providers():
     rep = runtime.device_report()
     assert "CPUExecutionProvider" in rep and "onnxruntime" in rep
+
+
+def test_output_batch_axes():
+    m = OnnxModel(TINY, device="cpu", batch_size=3, output_batch_axes={"s": 0})
+    x = _inputs(7)
+    np.testing.assert_allclose(m.run(x)["s"], m.run(x, batch_size=7)["s"], rtol=1e-6)
+    with pytest.raises(ValueError, match="unknown output"):
+        OnnxModel(TINY, output_batch_axes={"nope": 1})

@@ -163,6 +163,9 @@ class OnnxModel:
         Allow TF32 matrix maths on the GPU. Default False: ONNX Runtime's CUDA provider enables
         TF32 by default, which changes results at the ~1e-3 level (not the ~1e-6 of float32
         rounding) on Ampere and newer GPUs; off, GPU and CPU outputs agree to float32 rounding.
+    output_batch_axes : mapping name -> int, optional
+        Batch axis of each output, if not 0 (e.g. ``{'probs': 1}`` for a ``(time, batch, ...)``
+        output); :meth:`run` concatenates the chunks along it.
     sha256 : str, optional
         Expected SHA-256 hex digest of the file; a mismatch raises :class:`RuntimeError`.
     name : str, optional
@@ -171,8 +174,8 @@ class OnnxModel:
 
     def __init__(self, path: str, *, device: str = 'auto', threads: int | None = None,
                  batch_size: int = 32, cuda_device_id: int = 0, cuda_tf32: bool = False,
-                 sha256: str | None = None,
-                 name: str | None = None):
+                 output_batch_axes: Mapping[str, int] | None = None,
+                 sha256: str | None = None, name: str | None = None):
         if device not in DEVICES:
             raise ValueError(f"device must be one of {DEVICES}, got {device!r}")
         if threads is not None and (not isinstance(threads, (int, np.integer)) or isinstance(threads, bool)
@@ -212,6 +215,11 @@ class OnnxModel:
         self._inputs = {i.name: i for i in self._session.get_inputs()}
         self.input_names = [i.name for i in self._session.get_inputs()]
         self.output_names = [o.name for o in self._session.get_outputs()]
+        self.output_batch_axes = {k: 0 for k in self.output_names}
+        for k, ax in (output_batch_axes or {}).items():
+            if k not in self.output_batch_axes:
+                raise ValueError(f"{self.name}: unknown output {k!r} in output_batch_axes ({self.output_names})")
+            self.output_batch_axes[k] = int(ax)
 
     # -- construction helpers -------------------------------------------------------------
     @staticmethod
@@ -308,7 +316,8 @@ class OnnxModel:
         Returns
         -------
         dict name -> np.ndarray
-            One array per model output (:attr:`output_names`), concatenated along axis 0.
+            One array per model output (:attr:`output_names`), concatenated along its batch
+            axis (0 unless set with ``output_batch_axes``).
         """
         bs = self.batch_size if batch_size is None else self._check_batch_size(batch_size)
         feed, n = self._prepare(inputs)
@@ -317,7 +326,7 @@ class OnnxModel:
             out = self._session.run(self.output_names, {k: v[i:i + bs] for k, v in feed.items()})
             for lst, o in zip(chunks, out):
                 lst.append(o)
-        return {name: (lst[0] if len(lst) == 1 else np.concatenate(lst, axis=0))
+        return {name: (lst[0] if len(lst) == 1 else np.concatenate(lst, axis=self.output_batch_axes[name]))
                 for name, lst in zip(self.output_names, chunks)}
 
     def __repr__(self) -> str:
