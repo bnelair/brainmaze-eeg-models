@@ -79,8 +79,11 @@ def test_cuda_session_error_auto_falls_back(monkeypatch):
     ort = runtime._ort()
     real = _REAL_SESSION
 
+    seen = []
+
     def boom(path, sess_options=None, providers=None):
-        if "CUDAExecutionProvider" in providers:
+        seen.append(providers)
+        if any(isinstance(p, tuple) and p[0] == "CUDAExecutionProvider" for p in providers):
             raise RuntimeError("libcudnn.so.9: cannot open shared object file")
         return real(path, sess_options=sess_options, providers=providers)
 
@@ -91,6 +94,11 @@ def test_cuda_session_error_auto_falls_back(monkeypatch):
         OnnxModel(TINY, device="cuda")
     with pytest.warns(RuntimeWarning):
         assert OnnxModel(TINY, device="auto").device == "cpu"
+    # TF32 is disabled on the CUDA provider unless asked for
+    assert seen[0][0] == ("CUDAExecutionProvider", {"use_tf32": 0})
+    with pytest.raises(RuntimeError):
+        OnnxModel(TINY, device="cuda", cuda_tf32=True)
+    assert seen[-1][0] == ("CUDAExecutionProvider", {"use_tf32": 1})
 
 
 def test_threads_option():
