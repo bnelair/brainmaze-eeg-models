@@ -52,6 +52,8 @@ jobs:
       required-assets: >-
         brainmaze_eeg_models/spindles/_models/spindle-detector-eeg.onnx
         brainmaze_eeg_models/spindles/_models/spindle-detector-ieeg.onnx
+        brainmaze_eeg_models/seizure/_models/modelA_paper.onnx
+        brainmaze_eeg_models/seizure/_models/modelB_full.onnx
 
   publish:
     needs: build

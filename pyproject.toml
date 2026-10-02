@@ -50,6 +50,14 @@ test = [
     "pywavelets>=1.4",
     "openspindlenet==0.1.1",
 ]
+# Development only, NEVER a runtime dependency: re-export the seizure models from the PyTorch
+# weights of brainmaze-torch 0.2.0 (tools/export_seizure_onnx.py) and run the ONNX-vs-PyTorch
+# parity tests (tests/test_seizure_parity.py, skipped without these packages).
+export = [
+    "torch>=2.3",
+    "onnx>=1.16",
+    "brainmaze-torch==0.2.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
