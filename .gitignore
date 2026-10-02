@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Locally built documentation (published by the Docs workflow, never committed)
+/docs/

@@ -1,0 +1,12 @@
+# Release artifacts (wheel AND sdist) ship only the package code and the runtime assets
+# listed under [tool.setuptools.package-data] in pyproject.toml: the trained ONNX models
+# brainmaze_eeg_models/*/_models/*.onnx, which must stay (never exclude *.onnx here).
+# This file only keeps setuptools' default sdist extras out. The real guard is the shared
+# artifact check (brainmaze-sphinx check-dist.yml, `dist-check: error` + `required-assets`
+# in ci.yml and release.yml), which fails on anything else and on a missing model.
+prune tests
+prune docs_src
+prune img
+prune demo
+prune tools
+prune .github
