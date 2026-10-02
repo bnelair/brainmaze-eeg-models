@@ -52,6 +52,10 @@ gpu = [
 ]
 test = [
     "pytest>=8.2",
+    # Reference implementations for the golden / parity tests (never needed at runtime):
+    # PyWavelets for the CWT, the original OpenSpindleNet package for the spindle detector.
+    "pywavelets>=1.4",
+    "openspindlenet==0.1.1",
 ]
 
 [tool.setuptools.packages.find]

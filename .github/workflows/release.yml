@@ -49,6 +49,9 @@ jobs:
       # Same lists as ci.yml (keep them in sync): only the trained ONNX models may ship, and
       # every model listed in `required-assets` must be in the wheel AND the sdist.
       allowed-assets: brainmaze_eeg_models/*/_models/*.onnx
+      required-assets: >-
+        brainmaze_eeg_models/spindles/_models/spindle-detector-eeg.onnx
+        brainmaze_eeg_models/spindles/_models/spindle-detector-ieeg.onnx
 
   publish:
     needs: build

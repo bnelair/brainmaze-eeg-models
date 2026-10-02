@@ -21,3 +21,6 @@ jobs:
       # is also listed in `required-assets` (here AND in release.yml) once it is added, so
       # the check fails if it drops out of the wheel or the sdist.
       allowed-assets: brainmaze_eeg_models/*/_models/*.onnx
+      required-assets: >-
+        brainmaze_eeg_models/spindles/_models/spindle-detector-eeg.onnx
+        brainmaze_eeg_models/spindles/_models/spindle-detector-ieeg.onnx
