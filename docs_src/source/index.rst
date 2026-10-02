@@ -12,3 +12,5 @@ Version |release|. Source: https://github.com/bnelair/brainmaze-eeg-models
 
 .. toctree::
    :maxdepth: 2
+
+   runtime
