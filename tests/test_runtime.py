@@ -332,3 +332,50 @@ def test_preload_runs_once_before_the_cuda_session_and_is_quiet(monkeypatch, cap
     assert events == ["preload", "session", "session"]        # once per process, before the session
     assert "Failed to load" not in capfd.readouterr().out      # captured, not printed
     assert "libcublasLt" in runtime.device_report()
+
+
+# --- check_gpu (verification r2, #2 V1): a real check, not the provider list ----------------
+
+def test_check_gpu_embeds_the_tiny_test_model():
+    with open(TINY, "rb") as fh:
+        assert runtime._TINY_ONNX == fh.read()
+
+
+def test_check_gpu_raises_without_cuda(monkeypatch):
+    monkeypatch.setattr(runtime._ort(), "get_available_providers", lambda: ["CPUExecutionProvider"])
+    with pytest.raises(RuntimeError, match="device='cuda'"):
+        runtime.check_gpu()
+
+
+def test_check_gpu_detects_the_silent_cpu_fallback(monkeypatch):
+    # a GPU build without usable CUDA libraries: the provider is LISTED, the session gets the CPU
+    ort = runtime._ort()
+    monkeypatch.setattr(ort, "get_available_providers", lambda: ["CUDAExecutionProvider", "CPUExecutionProvider"])
+    monkeypatch.setattr(ort, "InferenceSession", _FallbackSession)
+    assert "does not prove" in runtime.device_report()
+    with pytest.raises(RuntimeError, match="could not initialise the CUDA provider"):
+        runtime.check_gpu()
+
+
+def test_check_gpu_reports_inference_failures(monkeypatch):
+    ort = runtime._ort()
+
+    class Broken(_CudaSession):
+        def run(self, *a, **k):
+            raise RuntimeError("CUBLAS_STATUS_NOT_INITIALIZED")
+
+    monkeypatch.setattr(ort, "get_available_providers", lambda: ["CUDAExecutionProvider", "CPUExecutionProvider"])
+    monkeypatch.setattr(ort, "InferenceSession", Broken)
+    with pytest.raises(RuntimeError, match="inference failed: CUBLAS"):
+        runtime.check_gpu()
+
+
+def test_check_gpu_success_on_a_working_cuda_session(monkeypatch):
+    import brainmaze_eeg_models as bm
+    ort = runtime._ort()
+    monkeypatch.setattr(ort, "get_available_providers", lambda: ["CUDAExecutionProvider", "CPUExecutionProvider"])
+    monkeypatch.setattr(ort, "InferenceSession", _CudaSession)
+    _CudaSession.created.clear()
+    msg = bm.check_gpu(device_id=2)
+    assert msg.startswith("CUDA works: GPU 2") and "CUDAExecutionProvider" in msg
+    assert _CudaSession.created[-1][0] == ("CUDAExecutionProvider", {"device_id": 2, "use_tf32": 0})

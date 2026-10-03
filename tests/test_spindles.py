@@ -10,6 +10,7 @@ from brainmaze_eeg_models.spindles._decode import decode_window, interval_nms
 from brainmaze_eeg_models.spindles._detector import _flat_runs, _resample_ratio
 
 from . import osn_reference
+from . import spindle_snapshot_cases as snap
 
 GOLDEN = np.load(os.path.join(os.path.dirname(__file__), "data", "spindle_golden.npz"))
 KINDS = ("eeg", "ieeg")
@@ -339,7 +340,8 @@ def test_low_rates_down_to_50_hz_are_accepted(detectors):
     x = _long_signal(4)
     a = detectors["eeg"].detect(x, 250).channel_intervals(0)
     for fs, (up, down) in ((100.0, (2, 5)), (50.0, (1, 5))):
-        res = detectors["eeg"].detect(resample_poly(x, up, down), fs)
+        with pytest.warns(RuntimeWarning, match="below 200 Hz"):      # verification r2, #3 V2
+            res = detectors["eeg"].detect(resample_poly(x, up, down), fs)
         assert res.params["resample"] == ((5, 2) if fs == 100 else (5, 1)) and res.params["fs_model"] == 250.0
         b = res.channel_intervals(0)
         assert len(b) > 0.5 * len(a)                       # spindles (11-16 Hz) survive 50 Hz sampling
@@ -516,3 +518,165 @@ def test_dataframe_and_repr(detectors):
     df = res.to_dataframe()
     assert list(df.columns) == ["start", "end", "duration", "confidence", "channel"] and len(df) == len(res)
     assert "SpindleDetector" in repr(detectors["eeg"])
+
+
+# --- sampling-rate warning (verification r2, #3 V2) --------------------------------------
+
+def test_low_sampling_rate_warns_and_200_hz_does_not(detectors):
+    from scipy.signal import resample_poly
+    x = _long_signal(2)
+    for fs, (up, down) in ((128.0, (64, 125)), (199.0, (199, 250))):
+        with pytest.warns(RuntimeWarning, match="Use the same sampling rate and preprocessing"):
+            detectors["eeg"].detect(resample_poly(x, up, down), fs)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        for fs, (up, down) in ((200.0, (4, 5)), (250.0, (1, 1)), (256.0, (128, 125))):
+            detectors["eeg"].detect(resample_poly(x, up, down), fs)
+
+
+# --- resampling ratio (verification r2, #3 V4): the closest approximate ratio -------------
+
+@pytest.mark.parametrize("fs, ratio", [(256.0000001, (125, 128)), (499.907, (45699, 91381)),
+                                       (2047.98, (12203, 99966)), (50.123, (813, 163))])
+def test_approximate_ratio_is_the_closest(fs, ratio):
+    from fractions import Fraction
+    up, down, fs_out = _resample_ratio(fs)
+    assert (up, down) == ratio and fs_out == fs * up / down
+    err = abs(fs_out - FS) / FS
+    assert err < 1e-7
+    # no ratio with max(up, down) <= 1e5 is closer (the smallest-denominator one used to be
+    # picked: 256.0000001 Hz -> 83/85, 9.4e-5)
+    target = Fraction(FS) / Fraction(fs)
+    for lim in (100, 1000, 10000, 10 ** 5):
+        r = target.limit_denominator(lim) if target < 1 else 1 / (1 / target).limit_denominator(lim)
+        if max(r.numerator, r.denominator) <= 10 ** 5:
+            assert err <= abs(float(r) * fs - FS) / FS + 1e-15
+
+
+# --- not-evaluated time (verification r2, #3 V3) ----------------------------------------
+
+def test_window_below_min_valid_fraction_owns_not_evaluated_time(detectors):
+    # step 20 s: the window starting at 40 s owns [45, 65) s. Gaps [40, 49) and [61, 70) leave it
+    # 40 % valid (< min_valid_fraction 0.5), so [45, 65) is not evaluated although it lies outside
+    # the widened gaps [39.5, 49.5) and [60.5, 70.5); the neighbours (70 % valid) are evaluated.
+    x = _long_signal(4)                                       # 120 s
+    y = x.copy()
+    y[40 * 250:49 * 250] = np.nan
+    y[61 * 250:70 * 250] = np.nan
+    res = detectors["eeg"].detect(y, 250)
+    np.testing.assert_allclose(res.not_evaluated[0], [[39.5, 70.5]], atol=1e-9)
+    iv = res.channel_intervals(0)
+    assert not np.any((iv[:, 0] < 70.5) & (iv[:, 1] > 39.5))
+    assert res.evaluated_fraction(0) == pytest.approx(1 - 31 / 120)
+    # with a lower threshold the window is evaluated: only the widened gaps remain
+    res2 = SpindleDetector("eeg", device="cpu", min_valid_fraction=0.3).detect(y, 250)
+    np.testing.assert_allclose(res2.not_evaluated[0], [[39.5, 49.5], [60.5, 70.5]], atol=1e-9)
+    iv2 = res2.channel_intervals(0)
+    assert not np.any((iv2[:, 0] < 49.5) & (iv2[:, 1] > 39.5))
+    assert not np.any((iv2[:, 0] < 70.5) & (iv2[:, 1] > 60.5))
+
+
+@pytest.mark.parametrize("fs", [250.0, 500.0, snap.FS_APPROX])
+def test_not_evaluated_time_on_a_gappy_recording(fs):
+    # every gap rule at once (start gap, 50 ms gap, +inf, flat run, a window below
+    # min_valid_fraction): exact intervals in seconds, independent of the sampling rate
+    x = snap.gappy(snap.approx_rate(snap._long(), fs) if fs != 250 else snap._long(), fs)
+    res = SpindleDetector("ieeg", device="cpu").detect(x, fs)
+    expected = [[0.0, 1.3], [39.5, 40.55], [99.5, 130.5], [199.5, 202.0], [249.5, 252.5], [299.5, 303.5]]
+    np.testing.assert_allclose(res.not_evaluated[0], expected, atol=1.5 / fs)
+    assert res.evaluated_fraction(0) == pytest.approx(1 - 42.85 / 360, abs=1e-4)
+    iv = res.channel_intervals(0)
+    for a, b in expected:
+        assert not np.any((iv[:, 0] < b) & (iv[:, 1] > a))
+
+
+# --- time axis at approximate resampling ratios (verification r2, #3 V3) -----------------
+
+def test_time_axis_at_an_approximate_ratio_matches_250_hz():
+    x = snap._long()
+    det = SpindleDetector("eeg", device="cpu")
+    a = det.detect(x, 250).channel_intervals(0)
+    res = det.detect(snap.approx_rate(x), snap.FS_APPROX)
+    up, down = res.params["resample"]
+    assert (up, down) == (45699, 91381) and res.params["fs_model"] == pytest.approx(250, rel=1e-9)
+    assert res.duration_s == pytest.approx(x.size / 250, abs=1 / snap.FS_APPROX)
+    b = res.channel_intervals(0)
+    m = _iou_matrix(a, b)
+    assert (m.max(axis=1) >= 0.5).mean() > 0.9 and (m.max(axis=0) >= 0.5).mean() > 0.9
+    j, ok = m.argmax(axis=1), m.max(axis=1) >= 0.5
+    assert np.median(np.abs(b[j[ok], :2] - a[ok, :2])) < 0.02         # seconds, over the whole 6 min
+
+
+def test_time_axis_uses_the_effective_model_rate(monkeypatch):
+    # Force a coarse ratio (no resampling at 251 Hz: the model sees 251 Hz data as 250 Hz) so
+    # that a time axis built on 250 Hz instead of the effective rate is off by 0.4 % (1.4 s at the
+    # end of 6 min); the effective-rate axis keeps the spindles where the 250 Hz run has them.
+    from brainmaze_eeg_models.spindles import _detector
+    x = snap._long()
+    det = SpindleDetector("eeg", device="cpu")
+    a = det.detect(x, 250).channel_intervals(0)
+    x251 = snap.approx_rate(x, 251.0)
+    monkeypatch.setattr(_detector, "_resample_ratio", lambda fs: (1, 1, fs))
+    res = det.detect(x251, 251.0)
+    assert res.params["fs_model"] == 251.0 and res.params["resample"] == (1, 1)
+    b = res.channel_intervals(0)
+    m = _iou_matrix(a, b)
+    j, ok = m.argmax(axis=1), m.max(axis=1) >= 0.3
+    assert ok.mean() > 0.8
+    late = a[ok, 0] > 200
+    assert late.sum() >= 5
+    assert np.abs(b[j[ok], 0] - a[ok, 0])[late].max() < 0.3          # a 250 Hz axis: >= 0.8 s off
+
+
+# --- full-defaults snapshot (verification r2, #3 V1) --------------------------------------
+
+SNAP = np.load(snap.SNAPSHOT)
+_CASES = None
+
+
+def _snapshot_cases():
+    global _CASES
+    if _CASES is None:
+        _CASES = snap.cases()
+    return _CASES
+
+
+def _assert_matches_snapshot(name, kind, x, fs):
+    got = snap.run(SpindleDetector(kind, device="cpu"), x, fs)
+    key = f"{name}__{kind}__"
+    want = {k[len(key):]: SNAP[k] for k in SNAP.files if k.startswith(key)}
+    assert want, f"no snapshot for {name}/{kind}"
+    assert sorted(got) == sorted(want)
+    assert got["n_windows"] == want["n_windows"]
+    assert got["fs_model"] == pytest.approx(want["fs_model"], rel=1e-12)
+    for k in sorted(want):
+        if k.endswith("_iv"):
+            assert got[k].shape == want[k].shape, (k, len(got[k]), len(want[k]))
+            np.testing.assert_allclose(got[k][:, :2], want[k][:, :2], rtol=0, atol=1e-2 / 250, err_msg=k)
+            np.testing.assert_allclose(got[k][:, 2], want[k][:, 2], rtol=0, atol=1e-5, err_msg=k)
+        elif k.endswith("_ne"):
+            assert got[k].shape == want[k].shape, (k, got[k], want[k])
+            np.testing.assert_allclose(got[k], want[k], rtol=0, atol=1e-9, err_msg=k)
+
+
+@pytest.mark.parametrize("kind", KINDS)
+@pytest.mark.parametrize("name", ["sample_eeg", "sample_ieeg", "synthetic", "synthetic_multichannel", "long",
+                                  "long_gappy", "long_500hz_gappy", "long_approx_rate"])
+def test_full_defaults_match_the_frozen_snapshot(name, kind):
+    """Our own default output (step 20, demean auto, flat runs, gaps, ownership, NMS) is frozen in
+    tests/data/spindle_snapshot.npz (tests/data/make_spindle_snapshot.py). A failure means the
+    default pipeline changed: if deliberate, regenerate and explain the change in the PR."""
+    x, fs = _snapshot_cases()[name]
+    _assert_matches_snapshot(name, kind, x, fs)
+
+
+@pytest.mark.parametrize("kind", KINDS)
+@pytest.mark.parametrize("name", ["demo_hour", "demo_hour_gappy"])
+def test_full_defaults_match_the_frozen_snapshot_on_the_demo_night(name, kind):
+    # 1 h of the public demo night (231 / 180 spindles), with and without 25 random gaps; runs
+    # only where the night is available locally ($BRAINMAZE_DEMO_NIGHT or the spindle demo's cache)
+    path = snap.demo_night_path()
+    if path is None:
+        pytest.skip("demo night not available locally (set BRAINMAZE_DEMO_NIGHT=/path/patient_one_data.mat)")
+    x, fs = snap.demo_cases(path)[name]
+    _assert_matches_snapshot(name, kind, x, fs)

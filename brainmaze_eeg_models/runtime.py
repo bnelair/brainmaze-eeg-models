@@ -30,8 +30,15 @@ Swap the package by hand::
     pip install brainmaze-eeg-models
     pip uninstall -y onnxruntime
     pip install "onnxruntime-gpu[cuda,cudnn]"     # CUDA + cuDNN as pip wheels
-    python -c "import onnxruntime as ort; print(ort.get_available_providers())"
-    # must list 'CUDAExecutionProvider'; brainmaze_eeg_models.runtime.device_report() says more
+    python -c "import brainmaze_eeg_models as bm; print(bm.check_gpu())"
+
+:func:`check_gpu` is the real check: it creates a CUDA session and runs a tiny inference on
+the GPU, and raises :class:`RuntimeError` with the reason (and what to install) if that does
+not work. A ``CUDAExecutionProvider`` in ``onnxruntime.get_available_providers()`` only shows
+that the GPU build is installed: a GPU build without usable CUDA libraries lists it too, and
+then every session falls back to the CPU. Any model created with ``device='cuda'`` (e.g.
+``SpindleDetector('eeg', device='cuda')``) also raises if its CUDA session cannot be created.
+:func:`device_report` lists what is installed.
 
 **Upgrades:** ``pip install -U brainmaze-eeg-models`` re-installs the CPU ``onnxruntime``
 (it is a dependency), which overwrites the GPU module again. Upgrade with
@@ -40,8 +47,14 @@ Swap the package by hand::
 
 **CUDA versions:** ``onnxruntime-gpu`` >= 1.27 on PyPI is built for **CUDA 13.0** + cuDNN 9
 (needs a driver that supports CUDA 13). For a CUDA 12 system (e.g. an older cluster driver)
-use Microsoft's CUDA 12 feed, whose builds need **CUDA >= 12.8** (1.27-1.29, Python 3.11-3.14
-on 2026-10-02; pick the newest version listed there)::
+the simplest route is the last CUDA 12 builds on PyPI, 1.24-1.26 (Python >= 3.11), whose
+``[cuda,cudnn]`` extras install the ``-cu12`` CUDA and cuDNN wheels::
+
+    pip uninstall -y onnxruntime onnxruntime-gpu
+    pip install "onnxruntime-gpu[cuda,cudnn]<1.27"
+
+For a newer CUDA 12 build use Microsoft's CUDA 12 feed, whose builds need **CUDA >= 12.8**
+(1.27-1.29, Python 3.11-3.14 on 2026-10-02; pick the newest version listed there)::
 
     pip uninstall -y onnxruntime onnxruntime-gpu
     pip install --no-deps onnxruntime-gpu==1.29.0 \
@@ -49,9 +62,10 @@ on 2026-10-02; pick the newest version listed there)::
     pip install nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cublas-cu12 \
         nvidia-cufft-cu12 nvidia-curand-cu12 nvidia-cuda-nvrtc-cu12   # or a system CUDA >= 12.8 + cuDNN 9
 
-(``--no-deps`` with an exact version keeps pip from taking the same version from PyPI, which
-is the CUDA 13 build; the other dependencies are already installed with the CPU package.)
-**Python 3.10:** the newest ``onnxruntime-gpu`` with Python 3.10 wheels is 1.23.2, a CUDA 12
+(``--no-deps``: the feed also mirrors other packages, in old versions (without it pip would
+install e.g. numpy 2.1.2 and protobuf 5.28.3 from the feed); the dependencies are already
+installed with the CPU package. With ``--index-url`` pip does not look at PyPI at all, so it
+cannot pick the CUDA 13 build from there.) **Python 3.10:** the newest ``onnxruntime-gpu`` with Python 3.10 wheels is 1.23.2, a CUDA 12
 build, so the first recipe gives CUDA 12 (its ``[cuda,cudnn]`` extras install the ``-cu12``
 wheels). See the `ONNX Runtime CUDA requirements
 <https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements>`_.
@@ -62,19 +76,21 @@ been measured yet in this package (TF32 is disabled by default, see ``cuda_tf32`
 """
 from __future__ import annotations
 
+import base64
 import contextlib
 import hashlib
 import importlib.metadata as _md
 import io
 import logging
 import os
+import tempfile
 import threading
 import warnings
 from typing import Mapping, Sequence
 
 import numpy as np
 
-__all__ = ['OnnxModel', 'available_providers', 'device_report', 'DEVICES']
+__all__ = ['OnnxModel', 'available_providers', 'device_report', 'check_gpu', 'DEVICES']
 
 DEVICES = ('auto', 'cpu', 'cuda')
 
@@ -204,6 +220,9 @@ def device_report() -> str:
         f"available providers: {', '.join(ort.get_available_providers())}",
         f"device='auto' would try: {'cuda, then cpu' if _CUDA in ort.get_available_providers() else 'cpu'}",
     ]
+    if _CUDA in ort.get_available_providers():
+        lines.append("note: a listed CUDAExecutionProvider does not prove that CUDA works (a GPU build without "
+                     "usable CUDA libraries lists it too); run brainmaze_eeg_models.check_gpu()")
     if _ort_conflict():
         lines.append("CONFLICT: both onnxruntime and onnxruntime-gpu are installed; the module above is "
                      f"whichever was installed last. Fix: {_SWAP_FIX}")
@@ -211,6 +230,51 @@ def device_report() -> str:
         lines.append("onnxruntime.preload_dlls output (CUDA libraries):\n  "
                      + _PRELOAD_OUTPUT.replace("\n", "\n  "))
     return "\n".join(lines)
+
+
+# tests/data/tiny_affine.onnx (273 bytes; y = 2 * a + 1, s = sum(b, -1)), used by check_gpu().
+_TINY_ONNX = base64.b64decode(
+    "CAgSD2JyYWlubWF6ZS10ZXN0czr1AQoRCgFhCgN0d28SAmEyIgNNdWwKEQoCYTIKA29uZRIBeSIDQWRkCigKAWIKBGF4ZXMSAXMiCVJl"
+    "ZHVjZVN1bSoPCghrZWVwZGltcxgAoAECEgt0aW55X2FmZmluZSoNEAFCA3R3b0oEAAAAQCoNEAFCA29uZUoEAACAPyoUCAEQB0IEYXhl"
+    "c0oI//////////9aGAoBYRITChEIARINCgcSBWJhdGNoCgIIA1oYCgFiEhMKEQgBEg0KBxIFYmF0Y2gKAggEYhgKAXkSEwoRCAESDQoH"
+    "EgViYXRjaAoCCANiFAoBcxIPCg0IARIJCgcSBWJhdGNoQgQKABAR")
+
+
+def check_gpu(device_id: int = 0) -> str:
+    """Check that CUDA really works: create a CUDA session and run a tiny inference on the GPU.
+
+    Unlike ``onnxruntime.get_available_providers()`` (which lists ``CUDAExecutionProvider``
+    whenever the GPU build is installed, even if the CUDA libraries are missing and every
+    session would fall back to the CPU), this runs a small model with ``device='cuda'`` on
+    GPU ``device_id`` and compares its output with the exact result.
+
+    Returns
+    -------
+    str
+        A one-line confirmation (GPU index, session providers, onnxruntime version).
+
+    Raises
+    ------
+    RuntimeError
+        If CUDA cannot be used, with the reason and what to install (as ``device='cuda'``).
+    """
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, 'check_gpu.onnx')
+        with open(path, 'wb') as fh:
+            fh.write(_TINY_ONNX)
+        m = OnnxModel(path, device='cuda', cuda_device_id=device_id, name='check_gpu')
+        a = np.arange(6, dtype=np.float32).reshape(2, 3)
+        b = np.ones((2, 4), dtype=np.float32)
+        try:
+            out = m.run({'a': a, 'b': b})
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(_cuda_help(f"the CUDA session was created but inference failed: {exc}")) from exc
+        providers = m.providers
+        del m                          # release the session before the file is removed
+    if not (np.array_equal(out['y'], 2 * a + 1) and np.array_equal(out['s'], np.full(2, 4, np.float32))):
+        raise RuntimeError(f"CUDA inference returned wrong values on GPU {device_id}: {out}")
+    return (f"CUDA works: GPU {device_id}, session providers {providers}, "
+            f"onnxruntime {_ort().__version__} ({', '.join(_installed_ort_distributions()) or '?'})")
 
 
 class OnnxModel:

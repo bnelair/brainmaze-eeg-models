@@ -460,3 +460,60 @@ def test_torch_like_model_rejected():
             raise AssertionError("must not be called")
     with pytest.raises(TypeError, match="ONNX"):
         infer_seizure_probability(np.zeros((1, 100, 5)), FakeTorchModel())
+
+
+def test_cuda_number_must_match_a_loaded_gpu_model(monkeypatch):
+    # verification r2, #5 V1: a model loaded on one GPU must not run silently when another GPU
+    # is requested; cuda_number=None (default) means "the model's GPU" / GPU 0 when loading by name
+    from brainmaze_eeg_models.seizure import _models as sm
+    ort = runtime._ort()
+    real = ort.InferenceSession
+
+    class CudaSession:
+        def __init__(self, path, sess_options=None, providers=None):
+            self._s = real(path, sess_options=sess_options, providers=["CPUExecutionProvider"])
+            self._cuda = any(isinstance(p, tuple) and p[0] == "CUDAExecutionProvider" for p in providers)
+
+        def get_providers(self):
+            return (["CUDAExecutionProvider"] if self._cuda else []) + ["CPUExecutionProvider"]
+
+        def __getattr__(self, k):
+            return getattr(self._s, k)
+
+    monkeypatch.setattr(ort, "get_available_providers", lambda: ["CUDAExecutionProvider", "CPUExecutionProvider"])
+    monkeypatch.setattr(ort, "InferenceSession", CudaSession)
+    sm._load.cache_clear()
+    try:
+        x = np.random.default_rng(22).standard_normal(20 * FS)
+        spec = np.zeros((1, 100, 5))
+        g1 = load_trained_model('modelA', device='cuda', cuda_device_id=1)
+        assert g1.device == 'cuda' and g1.cuda_device_id == 1
+        for kw in (dict(use_cuda=True, cuda_number=0), dict(cuda_number=0), dict(device='cuda', cuda_number=2),
+                   dict(device='auto', cuda_number=0)):
+            with pytest.raises(ValueError, match="runs on GPU 1"):
+                predict_channel_seizure_probability(x, FS, g1, **kw, **KW)
+            with pytest.raises(ValueError, match="runs on GPU 1"):
+                infer_seizure_probability(spec, g1, **kw)
+        # matching or omitted cuda_number: runs on the model's GPU
+        predict_channel_seizure_probability(x, FS, g1, use_cuda=True, cuda_number=1, **KW)
+        predict_channel_seizure_probability(x, FS, g1, use_cuda=True, **KW)
+        infer_seizure_probability(spec, g1, cuda_number=np.int64(1))
+        # by name: cuda_number picks the GPU (default 0)
+        seen = []
+        orig = sm.load_trained_model
+
+        def spy(name, device='cpu', cuda_device_id=0, **kw):
+            seen.append(cuda_device_id)
+            return orig(name, device=device, cuda_device_id=cuda_device_id, **kw)
+
+        monkeypatch.setattr(sd, "load_trained_model", spy)
+        infer_seizure_probability(spec, 'modelA', use_cuda=True)
+        infer_seizure_probability(spec, 'modelA', use_cuda=True, cuda_number=3)
+        assert seen == [0, 3]
+        # a CPU model ignores cuda_number when no GPU is requested (torch: only used with use_cuda)
+        infer_seizure_probability(spec, load_trained_model('modelA'), cuda_number=1)
+        for bad in (-1, 1.5, True, "0"):
+            with pytest.raises(ValueError, match="cuda_number"):
+                infer_seizure_probability(spec, 'modelA', cuda_number=bad)
+    finally:
+        sm._load.cache_clear()
