@@ -140,6 +140,7 @@ def _resample_ratio(fs: float) -> tuple[int, int, float]:
     if no usable ratio exists (absurdly high ``fs``).
     """
     fr = Fraction(fs).limit_denominator(10 ** 6)
+    # Exact ratio (fast path; the closest-ratio search below finds the same ratio when one exists).
     if float(fr) == fs:                          # fs is (a float of) a small rational number
         exact = Fraction(FS) / fr
         if 1 <= max(exact.numerator, exact.denominator) <= _RESAMPLE_MAX:
@@ -280,16 +281,16 @@ class SpindleDetector:
     the same hour of a scalp night (Fz-Cz, demo night, 'eeg' model, defaults), presented at
     different rates with an anti-aliased resampler (``resample_poly``):
 
-    ========================  ==========  ==================================================
-    input rate / processing   spindles    vs the 250 Hz run (IoU >= 0.3)
-    ========================  ==========  ==================================================
-    250 Hz and >= 256 Hz      231-232     identical, except 1 extra at 256 Hz
-    200 Hz                    234         recall 0.996, precision 0.983
-    128 Hz                    247 (+7 %)  recall 0.991, precision 0.927
-    100 Hz                    291 (+26 %) recall 0.983, precision 0.780
-    50 Hz                     313 (+35 %) recall 0.970, precision 0.716
+    ========================  ============  ========================================
+    input rate / processing   spindles      vs the 250 Hz run (IoU >= 0.3)
+    ========================  ============  ========================================
+    250 Hz and >= 256 Hz      231-232       identical, except 1 extra at 256 Hz
+    200 Hz                    234           recall 0.996, precision 0.983
+    128 Hz                    247 (+7 %)    recall 0.991, precision 0.927
+    100 Hz                    291 (+26 %)   recall 0.983, precision 0.780
+    50 Hz                     313 (+35 %)   recall 0.970, precision 0.716
     250 Hz, 60 Hz notch only  273 (+18 %)
-    ========================  ==========  ==================================================
+    ========================  ============  ========================================
 
     The 250 Hz signal low-pass filtered at 25 / 50 Hz gives 315 / 290 spindles, matching the
     50 / 100 Hz runs at 99 %: the difference comes from the missing band above the lower
