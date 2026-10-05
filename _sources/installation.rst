@@ -89,3 +89,5 @@ Every model takes ``device='auto' | 'cpu' | 'cuda'``. ``'cuda'`` never falls bac
 silently (ONNX Runtime itself does when the CUDA libraries cannot be loaded): it raises an
 error explaining what is missing. ``'auto'`` uses CUDA when it initialises and the CPU
 otherwise, with a :class:`RuntimeWarning` when a GPU setup is installed but unusable.
+The default is ``'auto'`` for the spindle detector and ``'cpu'`` for the seizure functions
+(compatibility with brainmaze-torch 0.2.0).

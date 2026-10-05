@@ -202,6 +202,7 @@
         </ul>
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seizure.html">Seizure probability (iEEG)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spindles.html">Sleep spindles (OpenSpindleNet)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a></li>
 <li class="toctree-l1"><a class="reference internal" href="runtime.html">Runtime (ONNX Runtime, CPU / GPU)</a></li>
@@ -390,7 +391,11 @@ PyTorch is not needed.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>OpenSpindleNet (scalp EEG / iEEG)</p></td>
+<tr class="row-even"><td><p>Seizure probability, CNN + BiLSTM (iEEG; successor of brainmaze-torch)</p></td>
+<td><p><a class="reference internal" href="seizure.html#module-brainmaze_eeg_models.seizure" title="brainmaze_eeg_models.seizure"><code class="xref py py-mod docutils literal notranslate"><span class="pre">brainmaze_eeg_models.seizure</span></code></a></p></td>
+<td><p>probability every 0.5 s; NaN where not evaluated</p></td>
+</tr>
+<tr class="row-odd"><td><p>OpenSpindleNet (scalp EEG / iEEG)</p></td>
 <td><p><a class="reference internal" href="spindles.html#module-brainmaze_eeg_models.spindles" title="brainmaze_eeg_models.spindles"><code class="xref py py-mod docutils literal notranslate"><span class="pre">brainmaze_eeg_models.spindles</span></code></a></p></td>
 <td><p>spindle intervals (s) + confidence, and the time that could not be evaluated</p></td>
 </tr>
@@ -405,6 +410,15 @@ look at the data.</p>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#cpu-default">CPU (default)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#nvidia-gpu">NVIDIA GPU</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="seizure.html">Seizure probability (iEEG)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="seizure.html#conventions-both-levels">Conventions (both levels)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seizure.html#example-high-level-one-channel">Example (high level, one channel)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seizure.html#example-low-level-batch-of-300-s-windows">Example (low level, batch of 300 s windows)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seizure.html#moving-from-brainmaze-torch">Moving from brainmaze-torch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seizure.html#validation">Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seizure.html#api">API</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="spindles.html">Sleep spindles (OpenSpindleNet)</a><ul>
@@ -426,6 +440,7 @@ look at the data.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="credits.html">Credits and licences</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="credits.html#seizure-detection">Seizure detection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="credits.html#openspindlenet">OpenSpindleNet</a></li>
 </ul>
 </li>

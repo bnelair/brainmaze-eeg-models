@@ -14,6 +14,9 @@ Version |release|. Source: https://github.com/bnelair/brainmaze-eeg-models
    * - model
      - module
      - output
+   * - Seizure probability, CNN + BiLSTM (iEEG; successor of brainmaze-torch)
+     - :mod:`brainmaze_eeg_models.seizure`
+     - probability every 0.5 s; NaN where not evaluated
    * - OpenSpindleNet (scalp EEG / iEEG)
      - :mod:`brainmaze_eeg_models.spindles`
      - spindle intervals (s) + confidence, and the time that could not be evaluated
@@ -26,6 +29,7 @@ look at the data.
    :maxdepth: 2
 
    installation
+   seizure
    spindles
    demos
    runtime

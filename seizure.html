@@ -1,0 +1,918 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Seizure probability (iEEG) &#8212; BrainMaze: A Toolbox to Analyze Brain Electrophysiology, Behavior and Dynamics - EEG Models</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=4418a689" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'seizure';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="_static/brainmaze_173x173.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Sleep spindles (OpenSpindleNet)" href="spindles.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/brainmaze_1757x1762.PNG" class="logo__image only-light" alt="BrainMaze: A Toolbox to Analyze Brain Electrophysiology, Behavior and Dynamics - EEG Models - Home"/>
+    <img src="_static/brainmaze_1757x1762.PNG" class="logo__image only-dark pst-js-only" alt="BrainMaze: A Toolbox to Analyze Brain Electrophysiology, Behavior and Dynamics - EEG Models - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="index.html">
+                    BrainMaze - EEG Models
+                </a>
+            </li>
+        </ul>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Seizure probability (iEEG)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spindles.html">Sleep spindles (OpenSpindleNet)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="runtime.html">Runtime (ONNX Runtime, CPU / GPU)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits and licences</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/bnelair/brainmaze-eeg-models" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/seizure.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Seizure probability (iEEG)</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conventions-both-levels">Conventions (both levels)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-high-level-one-channel">Example (high level, one channel)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-low-level-batch-of-300-s-windows">Example (low level, batch of 300 s windows)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-from-brainmaze-torch">Moving from brainmaze-torch</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation">Validation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.seizure.predict_channel_seizure_probability"><code class="docutils literal notranslate"><span class="pre">predict_channel_seizure_probability()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.seizure.preprocess_input"><code class="docutils literal notranslate"><span class="pre">preprocess_input()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.seizure.infer_seizure_probability"><code class="docutils literal notranslate"><span class="pre">infer_seizure_probability()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.seizure.load_trained_model"><code class="docutils literal notranslate"><span class="pre">load_trained_model()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-brainmaze_eeg_models.seizure">
+<span id="seizure-probability-ieeg"></span><h1>Seizure probability (iEEG)<a class="headerlink" href="#module-brainmaze_eeg_models.seizure" title="Link to this heading">#</a></h1>
+<p>Seizure probability from intracranial EEG with a CNN + bidirectional LSTM applied to
+spectrograms (Sladky et al. 2022, Brain Communications, doi:10.1093/braincomms/fcac115).</p>
+<p>This is the brainmaze-torch 0.2.0 seizure pipeline with the model running on ONNX Runtime
+(PyTorch is not needed). The public functions have the same names, arguments and outputs as
+<code class="docutils literal notranslate"><span class="pre">brainmaze_torch.seizure_detection</span></code> 0.2.0, so code moves over by changing the import:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># before: from brainmaze_torch.seizure_detection import predict_channel_seizure_probability</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">brainmaze_eeg_models.seizure</span><span class="w"> </span><span class="kn">import</span> <span class="n">predict_channel_seizure_probability</span>
+</pre></div>
+</div>
+<p>Differences from brainmaze-torch 0.2.0:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#brainmaze_eeg_models.seizure.load_trained_model" title="brainmaze_eeg_models.seizure.load_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_trained_model()</span></code></a> returns an <a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel" title="brainmaze_eeg_models.runtime.OnnxModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">OnnxModel</span></code></a>
+(not a <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code>); passing a PyTorch model raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p></li>
+<li><p>Device: the default is the <strong>CPU</strong>, as in 0.2.0 (<code class="docutils literal notranslate"><span class="pre">use_cuda=None</span></code> and <code class="docutils literal notranslate"><span class="pre">device=None</span></code> -&gt;
+CPU; <a class="reference internal" href="#brainmaze_eeg_models.seizure.load_trained_model" title="brainmaze_eeg_models.seizure.load_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_trained_model()</span></code></a> defaults to <code class="docutils literal notranslate"><span class="pre">device='cpu'</span></code>). The GPU is opt-in:
+<code class="docutils literal notranslate"><span class="pre">use_cuda=True</span></code> (GPU <code class="docutils literal notranslate"><span class="pre">cuda_number</span></code>; an error if CUDA is unusable, never a silent CPU
+fallback), or the keyword <code class="docutils literal notranslate"><span class="pre">device='cuda'</span></code> / <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> (GPU if usable, else CPU). Giving
+both <code class="docutils literal notranslate"><span class="pre">use_cuda</span></code> and <code class="docutils literal notranslate"><span class="pre">device</span></code> is allowed only when they agree (<code class="docutils literal notranslate"><span class="pre">device='auto'</span></code> with an
+explicit <code class="docutils literal notranslate"><span class="pre">use_cuda</span></code> raises). A model from <a class="reference internal" href="#brainmaze_eeg_models.seizure.load_trained_model" title="brainmaze_eeg_models.seizure.load_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_trained_model()</span></code></a> runs where it was
+loaded. On the GPU, TF32 is disabled; GPU results are expected to match the CPU to float32
+rounding but have not been measured on a GPU yet.</p></li>
+<li><p>Numbers: the ONNX models (exported from the 0.2.0 weights, <code class="docutils literal notranslate"><span class="pre">tools/export_seizure_onnx.py</span></code>
+in the repository) give the same probabilities as PyTorch within float32 rounding: typically
+~1e-6, at most ~2e-5 (largest near p = 0.5; the float32 BiLSTM accumulates rounding
+differently in the two runtimes); NaN masks identical. The parity tests use a tolerance of
+1e-4, like the brainmaze-torch golden tests, which pass unchanged.</p></li>
+</ul>
+<p>Bundled models (<a class="reference internal" href="#brainmaze_eeg_models.seizure.load_trained_model" title="brainmaze_eeg_models.seizure.load_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_trained_model()</span></code></a>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'modelA'</span></code>: the model from the published work.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'modelB'</span></code>: the same architecture trained on an extended data set.</p></li>
+</ul>
+<p>The model was designed for 300 s inputs; its outputs near the ends of an input have
+little LSTM context and are less reliable, which is why the high-level function drops
+<code class="docutils literal notranslate"><span class="pre">discard_edges_s</span></code> at each window edge.</p>
+<p>Two ways to use it:</p>
+<ol class="arabic simple">
+<li><p><strong>High level</strong> (recommended): <a class="reference internal" href="#brainmaze_eeg_models.seizure.predict_channel_seizure_probability" title="brainmaze_eeg_models.seizure.predict_channel_seizure_probability"><code class="xref py py-func docutils literal notranslate"><span class="pre">predict_channel_seizure_probability()</span></code></a> turns one
+long channel into a continuous probability trace on a 0.5 s grid. It handles the
+windowing, gaps, flat segments and the recording edges.</p></li>
+<li><p><strong>Low level</strong>: <a class="reference internal" href="#brainmaze_eeg_models.seizure.preprocess_input" title="brainmaze_eeg_models.seizure.preprocess_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_input()</span></code></a> + <a class="reference internal" href="#brainmaze_eeg_models.seizure.infer_seizure_probability" title="brainmaze_eeg_models.seizure.infer_seizure_probability"><code class="xref py py-func docutils literal notranslate"><span class="pre">infer_seizure_probability()</span></code></a> for
+batches of windows you cut yourself.</p></li>
+</ol>
+<section id="conventions-both-levels">
+<h2>Conventions (both levels)<a class="headerlink" href="#conventions-both-levels" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fs</span></code> must be a whole, even number of Hz, at least 200 Hz. A float such as <code class="docutils literal notranslate"><span class="pre">500.0</span></code>
+(typical of .mat / MEF headers) is accepted. Odd or fractional rates raise
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>: resample first (anti-aliasing is the caller’s job). These rules come from
+the spectrogram grid (whole samples per 1 s segment, an integer 0.5 s hop, 100 bins
+below Nyquist), not from the training data. At 200-256 Hz the anti-alias filter of the
+acquisition or resampling usually attenuates the upper bins (from ~0.4 fs = 80-100 Hz),
+which the model did not see in training: prefer higher rates (see
+<a class="reference internal" href="#brainmaze_eeg_models.seizure.preprocess_input" title="brainmaze_eeg_models.seizure.preprocess_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_input()</span></code></a>).</p></li>
+<li><p>Spectrogram: 1 s segments (<code class="docutils literal notranslate"><span class="pre">nperseg</span> <span class="pre">=</span> <span class="pre">fs</span></code>), 0.5 s hop, bins 0-99 Hz at 1 Hz.
+Column <code class="docutils literal notranslate"><span class="pre">j</span></code> of a window describes the 1 s of signal centred <code class="docutils literal notranslate"><span class="pre">(j</span> <span class="pre">+</span> <span class="pre">1)</span> <span class="pre">*</span> <span class="pre">0.5</span></code> s
+after the window’s first sample.</p></li>
+<li><p>In the output of <a class="reference internal" href="#brainmaze_eeg_models.seizure.predict_channel_seizure_probability" title="brainmaze_eeg_models.seizure.predict_channel_seizure_probability"><code class="xref py py-func docutils literal notranslate"><span class="pre">predict_channel_seizure_probability()</span></code></a>, <strong>NaN means “not
+evaluated”, never “no seizure”</strong>: <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">0</span></code> and every 1 s segment containing NaN/inf or
+a flat signal are NaN; every other segment has a value.
+Combine channels or time with NaN-aware functions (<code class="docutils literal notranslate"><span class="pre">np.nanmax</span></code>) and never replace
+NaN by 0.</p></li>
+<li><p>The low-level <a class="reference internal" href="#brainmaze_eeg_models.seizure.preprocess_input" title="brainmaze_eeg_models.seizure.preprocess_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_input()</span></code></a> zero-fills NaN samples and does <strong>not</strong> mark
+them; masking is done by the high-level function.</p></li>
+</ul>
+</section>
+<section id="example-high-level-one-channel">
+<h2>Example (high level, one channel)<a class="headerlink" href="#example-high-level-one-channel" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">brainmaze_eeg_models.seizure</span><span class="w"> </span><span class="kn">import</span> <span class="n">predict_channel_seizure_probability</span>
+
+<span class="n">fs</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="mi">600</span><span class="p">)</span>                 <span class="c1"># 10 min, one channel</span>
+<span class="n">x</span><span class="p">[</span><span class="mi">100</span> <span class="o">*</span> <span class="n">fs</span><span class="p">:</span><span class="mi">130</span> <span class="o">*</span> <span class="n">fs</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>                 <span class="c1"># a 30 s gap</span>
+<span class="n">t</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">predict_channel_seizure_probability</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">'modelA'</span><span class="p">)</span>
+<span class="c1"># t = 0, 0.5, 1.0, ... s; p is NaN at t = 0 and over the gap</span>
+</pre></div>
+</div>
+</section>
+<section id="example-low-level-batch-of-300-s-windows">
+<h2>Example (low level, batch of 300 s windows)<a class="headerlink" href="#example-low-level-batch-of-300-s-windows" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">brainmaze_eeg_models.seizure</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">load_trained_model</span><span class="p">,</span> <span class="n">preprocess_input</span><span class="p">,</span> <span class="n">infer_seizure_probability</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">load_trained_model</span><span class="p">(</span><span class="s1">'modelA'</span><span class="p">)</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">fs</span> <span class="o">*</span> <span class="mi">300</span><span class="p">)</span>              <span class="c1"># 3 windows (rows) of 300 s</span>
+<span class="n">t</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sxx</span> <span class="o">=</span> <span class="n">preprocess_input</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">return_axes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>   <span class="c1"># sxx: (3, 100, 599)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">infer_seizure_probability</span><span class="p">(</span><span class="n">sxx</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>     <span class="c1"># (3, 599); y[:, j] belongs to t[j]</span>
+</pre></div>
+</div>
+</section>
+<section id="moving-from-brainmaze-torch">
+<h2>Moving from brainmaze-torch<a class="headerlink" href="#moving-from-brainmaze-torch" title="Link to this heading">#</a></h2>
+<p>brainmaze-torch is retired; its last release will re-export these functions with a
+<code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code>. The public names are the same:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>brainmaze-torch 0.2.0 (<code class="docutils literal notranslate"><span class="pre">brainmaze_torch.seizure_detection</span></code>)</p></th>
+<th class="head"><p>brainmaze-eeg-models (<code class="docutils literal notranslate"><span class="pre">brainmaze_eeg_models.seizure</span></code>)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">predict_channel_seizure_probability(x,</span> <span class="pre">fs,</span> <span class="pre">model,</span> <span class="pre">use_cuda,</span> <span class="pre">cuda_number,</span> <span class="pre">...)</span></code></p></td>
+<td><p>same signature and output; default device the CPU (as 0.2.0); <code class="docutils literal notranslate"><span class="pre">use_cuda=True</span></code> or the
+keyword <code class="docutils literal notranslate"><span class="pre">device='cuda'</span></code> / <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> opt in to the GPU (both given: must agree)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">preprocess_input(x,</span> <span class="pre">fs,</span> <span class="pre">return_axes=False)</span></code></p></td>
+<td><p>identical code and output</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">infer_seizure_probability(x,</span> <span class="pre">model,</span> <span class="pre">use_cuda,</span> <span class="pre">cuda_number)</span></code></p></td>
+<td><p>same; <code class="docutils literal notranslate"><span class="pre">model</span></code> may also be a name (default <code class="docutils literal notranslate"><span class="pre">'modelA'</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">load_trained_model('modelA'</span> <span class="pre">|</span> <span class="pre">'modelB')</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></p></td>
+<td><p>-&gt; <a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel" title="brainmaze_eeg_models.runtime.OnnxModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">OnnxModel</span></code></a> (<code class="docutils literal notranslate"><span class="pre">device</span></code> default <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>, <code class="docutils literal notranslate"><span class="pre">threads</span></code>,
+<code class="docutils literal notranslate"><span class="pre">cuda_device_id</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="validation">
+<h2>Validation<a class="headerlink" href="#validation" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>The brainmaze-torch golden tests (outputs of the published brainmaze-torch 0.1.1 code on a
+15 min iEEG seizure recording, incl. gaps and truncations) pass unchanged on the ONNX path
+(tolerance 1e-4; observed differences about 1e-6), as do its robustness tests.</p></li>
+<li><p>Parity with PyTorch (<code class="docutils literal notranslate"><span class="pre">tests/test_seizure_parity.py</span></code>, needs <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&quot;.[export]&quot;</span></code>):
+end-to-end probabilities within 1e-4 (the golden tolerance) and identical NaN masks for both
+models on the fixture (with and without a gap) and on synthetic recordings at 200-1000 Hz
+with bursts, gaps and flat segments; preprocessing bit-identical. Observed differences are
+~1e-6 typically and up to 2.1e-5 (modelB, a 400 Hz synthetic recording, at p = 0.49: the
+float32 BiLSTM over 599 steps accumulates rounding differently in the two runtimes, and the
+softmax is steepest near 0.5). These tests need PyTorch and are not run in CI; run them by
+hand when torch, onnx or onnxruntime change.</p></li>
+<li><p>GPU: not yet measured on a GPU (TF32 is off, so agreement to float32 rounding is expected).</p></li>
+<li><p>The ONNX files are produced by <code class="docutils literal notranslate"><span class="pre">tools/export_seizure_onnx.py</span></code> from the brainmaze-torch
+0.2.0 weights (reproducible byte for byte with the same PyTorch version) and their SHA-256
+is verified when they are loaded.</p></li>
+</ul>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.seizure.predict_channel_seizure_probability">
+<span class="sig-prename descclassname"><span class="pre">brainmaze_eeg_models.seizure.</span></span><span class="sig-name descname"><span class="pre">predict_channel_seizure_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'modelA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cuda_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_batch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discard_edges_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_valid_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_recording_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brainmaze_eeg_models.seizure.predict_channel_seizure_probability" title="Link to this definition">#</a></dt>
+<dd><p>Continuous seizure-probability trace for one (long) iEEG channel.</p>
+<p>The signal is cut into overlapping windows of <code class="docutils literal notranslate"><span class="pre">window_s</span></code> seconds every
+<code class="docutils literal notranslate"><span class="pre">step_s</span></code> seconds (the “regular” windows of the published method). Each
+window is converted to a spectrogram and run through the model;
+<code class="docutils literal notranslate"><span class="pre">discard_edges_s</span></code> seconds are dropped at both window edges (the BiLSTM
+has little context there), and overlapping windows are combined with a
+NaN-ignoring maximum. If the recording end does not fall on the step
+grid, one extra window aligned to the recording end covers the tail; it
+only fills time that no regular window covers and never changes a value
+produced by the regular windows. With the default parameters the output
+is therefore identical to the published method (brainmaze-torch &lt;= 0.1.1)
+wherever that method produced an estimate, except that invalid (gap /
+flat) segments are NaN instead of a number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Single-channel raw signal (1D). Lists and integer arrays are accepted.
+NaN / +-inf mark missing data (gaps).</p></li>
+<li><p><strong>fs</strong> (<em>int</em><em> or </em><em>float</em>) – Sampling rate in Hz. Must be a whole, even number &gt;= 200 Hz; a float
+such as <code class="docutils literal notranslate"><span class="pre">500.0</span></code> is accepted. Resample other rates first.</p></li>
+<li><p><strong>model</strong> (<em>str</em><em> or </em><a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel" title="brainmaze_eeg_models.runtime.OnnxModel"><em>OnnxModel</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">'modelA'</span></code> (published model), <code class="docutils literal notranslate"><span class="pre">'modelB'</span></code> (extended training set)
+or a model from <a class="reference internal" href="#brainmaze_eeg_models.seizure.load_trained_model" title="brainmaze_eeg_models.seizure.load_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_trained_model()</span></code></a>. Default <code class="docutils literal notranslate"><span class="pre">'modelA'</span></code>.</p></li>
+<li><p><strong>use_cuda</strong> (<em>bool</em><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">True</span></code>: GPU <code class="docutils literal notranslate"><span class="pre">cuda_number</span></code> (error if CUDA is unusable); <code class="docutils literal notranslate"><span class="pre">False</span></code>: CPU.
+Default None: <code class="docutils literal notranslate"><span class="pre">device</span></code>, else the CPU (as in brainmaze-torch 0.2.0; a loaded
+model runs where it was loaded).</p></li>
+<li><p><strong>cuda_number</strong> (<em>int</em><em>, </em><em>optional</em>) – CUDA device index. Default 0.</p></li>
+<li><p><strong>n_batch</strong> (<em>int</em><em>, </em><em>optional</em>) – Windows per inference batch (memory/speed trade-off only; does not
+change the result). Default 128.</p></li>
+<li><p><strong>window_s</strong> (<em>float</em><em>, </em><em>optional</em>) – Window length in seconds; multiple of 0.5, &gt;= 2. Default 300 (the
+length the model was designed for). The recording must be at least
+this long.</p></li>
+<li><p><strong>step_s</strong> (<em>float</em><em>, </em><em>optional</em>) – Step between window starts in seconds; multiple of 0.5. Must satisfy
+<code class="docutils literal notranslate"><span class="pre">step_s</span> <span class="pre">&lt;=</span> <span class="pre">window_s</span> <span class="pre">-</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">discard_edges_s</span> <span class="pre">-</span> <span class="pre">0.5</span></code> so that the kept
+(non-discarded) parts of consecutive windows leave no hole (a window
+has <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">window_s</span> <span class="pre">-</span> <span class="pre">1</span></code> half-second columns). Default 20.</p></li>
+<li><p><strong>discard_edges_s</strong> (<em>float</em><em>, </em><em>optional</em>) – Seconds dropped at each window edge; multiple of 0.5, may be 0.
+Default 10.</p></li>
+<li><p><strong>min_valid_fraction</strong> (<em>float</em><em>, </em><em>optional</em>) – Window preference near gaps. A window is <em>preferred</em> if at least this
+fraction of its 1 s segments (spectrogram columns) are valid (finite
+samples, not flat). A valid segment gets the maximum over the
+preferred windows covering it; only if none of them covers it, the
+maximum over all windows covering it is used. This never turns a valid
+segment into NaN; it only lets gap-heavy (mostly zero-filled) windows
+be ignored where a better window exists. Default 0.0: every window is
+preferred, i.e. the published method. Values &gt; 0 change probabilities
+next to long gaps compared with the published method (not validated).
+The choice is made per time point, so the result is <strong>not monotone in
+this value</strong>: a point switches from “preferred windows” to the
+fallback (all windows) as soon as the last preferred window covering
+it drops below the threshold, and different points switch at different
+values. If the value exceeds the valid fraction of every window, no
+window is preferred and the result equals that of 0.0. Choose one
+value for a study and do not interpolate between values.</p></li>
+<li><p><strong>fill_recording_edges</strong> (<em>bool</em><em>, </em><em>optional</em>) – The first and last <code class="docutils literal notranslate"><span class="pre">discard_edges_s</span></code> seconds of the <em>recording</em>
+lie in no window’s kept interior. If True (default), they are taken
+from the edge of the first/last window (shorter model context, hence
+less reliable). If False, they are NaN.</p></li>
+<li><p><strong>device</strong> (<em>{'auto'</em><em>, </em><em>'cpu'</em><em>, </em><em>'cuda'}</em><em>, </em><em>optional</em>) – Alternative to <code class="docutils literal notranslate"><span class="pre">use_cuda</span></code> (keyword only); <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> opts in to the GPU when it
+is usable. Giving both <code class="docutils literal notranslate"><span class="pre">device</span></code> and <code class="docutils literal notranslate"><span class="pre">use_cuda</span></code> is allowed only when they agree.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul>
+<li><p><strong>t</strong> (<em>numpy.ndarray, shape (n_out,)</em>) – Time in seconds from the first sample: <code class="docutils literal notranslate"><span class="pre">t[k]</span> <span class="pre">=</span> <span class="pre">k</span> <span class="pre">*</span> <span class="pre">0.5</span></code> (so the
+value for time <code class="docutils literal notranslate"><span class="pre">t</span></code> is at index <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">t</span></code>),
+<code class="docutils literal notranslate"><span class="pre">n_out</span> <span class="pre">=</span> <span class="pre">n_samples</span> <span class="pre">//</span> <span class="pre">(fs</span> <span class="pre">//</span> <span class="pre">2)</span></code>. The last stamp is the centre of
+the last complete 1 s segment.</p></li>
+<li><p><strong>prob</strong> (<em>numpy.ndarray, shape (n_out,), float64</em>) – Seizure probability in [0, 1] for the 1 s segment centred on
+<code class="docutils literal notranslate"><span class="pre">t[k]</span></code>, or <strong>NaN where no estimate exists</strong>. NaN is returned for:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">0</span></code> (a 1 s segment centred at 0 s would start before the data),</p></li>
+<li><p>every 1 s segment containing at least one NaN/inf sample (gaps),</p></li>
+<li><p>every 1 s segment over which the signal is constant (flat line,
+e.g. disconnected or saturated channel),</p></li>
+<li><p>the first/last <code class="docutils literal notranslate"><span class="pre">discard_edges_s</span></code> s if <code class="docutils literal notranslate"><span class="pre">fill_recording_edges</span></code> is
+False.</p></li>
+</ul>
+<p>NaN therefore always means “not evaluated”, never “no seizure”; a
+value is never 0 merely because a time point was not covered. Every
+other (valid) segment always gets a value, whatever
+<code class="docutils literal notranslate"><span class="pre">min_valid_fraction</span></code> is.</p>
+</li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">x</span></code> is not 1D, <code class="docutils literal notranslate"><span class="pre">fs</span></code> is invalid, the window parameters are
+    inconsistent, or the recording is shorter than <code class="docutils literal notranslate"><span class="pre">window_s</span></code>.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Gaps are not interpolated. Within an evaluated window the gap samples
+are zero-filled for the model (as in the original implementation),
+which can influence the probability of valid segments next to a gap via
+the BiLSTM context; only the gap segments themselves are masked to NaN.
+To fill short gaps instead (e.g. by interpolation), do so before calling
+this function; filled samples are then treated as valid data. See
+<code class="docutils literal notranslate"><span class="pre">min_valid_fraction</span></code> to ignore mostly-gap windows where possible.</p></li>
+<li><p>Probabilities of overlapping windows are combined with a NaN-ignoring
+maximum (<code class="docutils literal notranslate"><span class="pre">np.fmax</span></code>), as in the published method.</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">brainmaze_eeg_models.seizure</span><span class="w"> </span><span class="kn">import</span> <span class="n">predict_channel_seizure_probability</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fs</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="mi">600</span><span class="p">)</span>          <span class="c1"># 10 min, single channel</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">predict_channel_seizure_probability</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">'modelA'</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="go">(True, 0.5)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.seizure.preprocess_input">
+<span class="sig-prename descclassname"><span class="pre">brainmaze_eeg_models.seizure.</span></span><span class="sig-name descname"><span class="pre">preprocess_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brainmaze_eeg_models.seizure.preprocess_input" title="Link to this definition">#</a></dt>
+<dd><p>Convert raw signal windows into normalised spectrograms for the model.</p>
+<p>Each row of <code class="docutils literal notranslate"><span class="pre">x</span></code> is processed independently:</p>
+<ol class="arabic simple">
+<li><p>z-score the raw signal (NaN-aware mean/std over the row; a row with zero
+or undefined std is only mean-centred, never divided by 0),</p></li>
+<li><p>replace NaN / +-inf samples by 0,</p></li>
+<li><p>spectrogram with <code class="docutils literal notranslate"><span class="pre">nperseg</span> <span class="pre">=</span> <span class="pre">fs</span></code> (1 s, 1 Hz bins) and a 0.5 s hop
+(<code class="docutils literal notranslate"><span class="pre">noverlap</span> <span class="pre">=</span> <span class="pre">fs</span> <span class="pre">//</span> <span class="pre">2</span></code>), keeping the first 100 bins (0-99 Hz),</p></li>
+<li><p>z-score every frequency bin over time, using only columns with non-zero
+total power. Columns with zero power (e.g. a flat or zero-filled gap) are
+left at 0. If a bin has zero variance, or fewer than two columns have
+power, that bin is only mean-centred (no division by 0).</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>) or </em><em>(</em><em>batch_size</em><em>, </em><em>n_samples</em><em>)</em>) – Raw signal. A 1D input is treated as a single window. Rows are windows
+(or channels), columns are samples. Must contain at least <code class="docutils literal notranslate"><span class="pre">fs</span></code>
+samples (1 s).</p></li>
+<li><p><strong>fs</strong> (<em>int</em><em> or </em><em>float</em>) – Sampling rate in Hz. Must be a whole, even number &gt;= 200; a float such
+as <code class="docutils literal notranslate"><span class="pre">500.0</span></code> is accepted. Odd or fractional rates raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>
+– resample first (see Notes).</p></li>
+<li><p><strong>return_axes</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, also return the time and frequency axes. Default False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>t</strong> (<em>numpy.ndarray, shape (n_times,)</em>) – Only if <code class="docutils literal notranslate"><span class="pre">return_axes</span></code>. Time stamp in seconds of every column,
+relative to the first sample of the window: <code class="docutils literal notranslate"><span class="pre">(j</span> <span class="pre">+</span> <span class="pre">1)</span> <span class="pre">*</span> <span class="pre">0.5</span></code> – the
+centre of the 1 s segment <code class="docutils literal notranslate"><span class="pre">[j</span> <span class="pre">*</span> <span class="pre">0.5,</span> <span class="pre">j</span> <span class="pre">*</span> <span class="pre">0.5</span> <span class="pre">+</span> <span class="pre">1)</span></code>.</p></li>
+<li><p><strong>f</strong> (<em>numpy.ndarray, shape (100,)</em>) – Only if <code class="docutils literal notranslate"><span class="pre">return_axes</span></code>. Frequencies in Hz (0, 1, …, 99).</p></li>
+<li><p><strong>sxx</strong> (<em>numpy.ndarray, shape (batch_size, 100, n_times)</em>) – Normalised spectrograms, <code class="docutils literal notranslate"><span class="pre">n_times</span> <span class="pre">=</span> <span class="pre">floor((n_samples</span> <span class="pre">-</span> <span class="pre">fs)</span> <span class="pre">/</span> <span class="pre">(fs</span> <span class="pre">//</span> <span class="pre">2))</span> <span class="pre">+</span> <span class="pre">1</span></code>
+(= <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">duration_s</span> <span class="pre">-</span> <span class="pre">1</span></code> for whole-second inputs). Always finite.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">fs</span></code> is invalid, <code class="docutils literal notranslate"><span class="pre">x</span></code> is not 1D/2D, or shorter than 1 s.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>NaN samples are zero-filled <em>before</em> the spectrogram, so the model still
+sees a value there. This low-level function does not mark such columns;
+use <a class="reference internal" href="#brainmaze_eeg_models.seizure.predict_channel_seizure_probability" title="brainmaze_eeg_models.seizure.predict_channel_seizure_probability"><code class="xref py py-func docutils literal notranslate"><span class="pre">predict_channel_seizure_probability()</span></code></a>, which reports any 1 s
+segment containing NaN/inf (or a flat signal) as NaN in its output.</p>
+<p>Where the <code class="docutils literal notranslate"><span class="pre">fs</span></code> rules come from: they follow from the spectrogram grid,
+not from the training data (whose sampling rate is not documented in this
+repository). <code class="docutils literal notranslate"><span class="pre">nperseg</span> <span class="pre">=</span> <span class="pre">fs</span></code> needs a whole number of samples per second;
+the 0.5 s hop (<code class="docutils literal notranslate"><span class="pre">fs</span> <span class="pre">/</span> <span class="pre">2</span></code> samples) needs an even rate, otherwise the output
+would drift off the 0.5 s grid; and 100 one-Hz bins (0-99 Hz) need a
+Nyquist frequency of at least 100 Hz, i.e. <code class="docutils literal notranslate"><span class="pre">fs</span> <span class="pre">&gt;=</span> <span class="pre">200</span></code>.</p>
+<p>Anti-aliasing caveat at 200-256 Hz: acquisition (or resampling) anti-alias
+filters usually start attenuating at about 0.4 * fs, i.e. 80-100 Hz at
+these rates. The upper spectrogram bins then hold less power than in
+recordings with a higher native rate, which the model never saw in that
+form: a silent domain shift. Prefer a native rate &gt;= 250-500 Hz, and when
+you resample, keep the new rate high enough that the anti-alias filter’s
+transition band lies above 100 Hz.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.seizure.infer_seizure_probability">
+<span class="sig-prename descclassname"><span class="pre">brainmaze_eeg_models.seizure.</span></span><span class="sig-name descname"><span class="pre">infer_seizure_probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'modelA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cuda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cuda_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brainmaze_eeg_models.seizure.infer_seizure_probability" title="Link to this definition">#</a></dt>
+<dd><p>Run the seizure model on a batch of preprocessed spectrograms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>batch_size</em><em>, </em><em>100</em><em>, </em><em>n_times</em><em>)</em>) – Output of <a class="reference internal" href="#brainmaze_eeg_models.seizure.preprocess_input" title="brainmaze_eeg_models.seizure.preprocess_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_input()</span></code></a>. Must be finite and have
+<code class="docutils literal notranslate"><span class="pre">n_times</span> <span class="pre">&gt;=</span> <span class="pre">2</span></code>. Recommended window length is 300 s (599 columns).</p></li>
+<li><p><strong>model</strong> (<em>str</em><em> or </em><a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel" title="brainmaze_eeg_models.runtime.OnnxModel"><em>OnnxModel</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">'modelA'</span></code> (default), <code class="docutils literal notranslate"><span class="pre">'modelB'</span></code>, or a model from
+<a class="reference internal" href="#brainmaze_eeg_models.seizure.load_trained_model" title="brainmaze_eeg_models.seizure.load_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_trained_model()</span></code></a> (then the device arguments must agree with the
+device it was loaded on).</p></li>
+<li><p><strong>use_cuda</strong> (<em>bool</em><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">True</span></code>: run on the GPU <code class="docutils literal notranslate"><span class="pre">cuda_number</span></code> (error if CUDA is unusable);
+<code class="docutils literal notranslate"><span class="pre">False</span></code>: run on the CPU. Default None: <code class="docutils literal notranslate"><span class="pre">device</span></code>, else the CPU (as in
+brainmaze-torch 0.2.0; a loaded model runs where it was loaded).</p></li>
+<li><p><strong>cuda_number</strong> (<em>int</em><em>, </em><em>optional</em>) – CUDA device index. Default 0.</p></li>
+<li><p><strong>device</strong> (<em>{'auto'</em><em>, </em><em>'cpu'</em><em>, </em><em>'cuda'}</em><em>, </em><em>optional</em>) – Alternative to <code class="docutils literal notranslate"><span class="pre">use_cuda</span></code> (keyword only); <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> opts in to the GPU when it
+is usable. Giving both <code class="docutils literal notranslate"><span class="pre">device</span></code> and <code class="docutils literal notranslate"><span class="pre">use_cuda</span></code> is allowed only when they agree.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Seizure probability (softmax probability of class index 3 of the
+model’s 4 output classes) for every spectrogram column. Column <code class="docutils literal notranslate"><span class="pre">j</span></code>
+corresponds to the time stamp <code class="docutils literal notranslate"><span class="pre">t[j]</span></code> returned by
+<a class="reference internal" href="#brainmaze_eeg_models.seizure.preprocess_input" title="brainmaze_eeg_models.seizure.preprocess_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_input()</span></code></a> (<code class="docutils literal notranslate"><span class="pre">(j</span> <span class="pre">+</span> <span class="pre">1)</span> <span class="pre">*</span> <span class="pre">0.5</span></code> s from window start).
+Values are in [0, 1].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray, shape (batch_size, n_times), float32</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">x</span></code> has the wrong shape or contains non-finite values.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The ONNX model gives the same probabilities as the PyTorch model of brainmaze-torch
+0.2.0 to within float32 rounding: typically ~1e-6, at most ~2e-5 in an independent
+40-run check (largest near p = 0.5, where the softmax is steepest; the float32 BiLSTM
+over 599 steps accumulates rounding differently in the two runtimes).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.seizure.load_trained_model">
+<span class="sig-prename descclassname"><span class="pre">brainmaze_eeg_models.seizure.</span></span><span class="sig-name descname"><span class="pre">load_trained_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cuda_device_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brainmaze_eeg_models.seizure.load_trained_model" title="Link to this definition">#</a></dt>
+<dd><p>Load one of the bundled, pre-trained seizure-detection models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>{'modelA'</em><em>, </em><em>'modelB'}</em>) – <code class="docutils literal notranslate"><span class="pre">'modelA'</span></code>: the model from the published work (Sladky et al. 2022).
+<code class="docutils literal notranslate"><span class="pre">'modelB'</span></code>: the same architecture trained on an extended data set.</p></li>
+<li><p><strong>device</strong> (<em>{'cpu'</em><em>, </em><em>'auto'</em><em>, </em><em>'cuda'}</em>) – Default <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>, as brainmaze-torch 0.2.0 (bit-reproducible across machines).
+<code class="docutils literal notranslate"><span class="pre">'auto'</span></code> (GPU if usable, else CPU) and <code class="docutils literal notranslate"><span class="pre">'cuda'</span></code> are opt-in; see
+<a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel" title="brainmaze_eeg_models.runtime.OnnxModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">brainmaze_eeg_models.runtime.OnnxModel</span></code></a> (<code class="docutils literal notranslate"><span class="pre">'cuda'</span></code> never falls back to the
+CPU silently).</p></li>
+<li><p><strong>threads</strong> (<em>int</em><em>, </em><em>optional</em>) – CPU threads per inference call (None: ONNX Runtime default).</p></li>
+<li><p><strong>cuda_device_id</strong> (<em>int</em>) – GPU index for <code class="docutils literal notranslate"><span class="pre">'cuda'</span></code> / <code class="docutils literal notranslate"><span class="pre">'auto'</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Input <code class="docutils literal notranslate"><span class="pre">'x'</span></code>: spectrograms <code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">100,</span> <span class="pre">n_times)</span></code> from
+<a class="reference internal" href="#brainmaze_eeg_models.seizure.preprocess_input" title="brainmaze_eeg_models.seizure.preprocess_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_input()</span></code></a>; outputs <code class="docutils literal notranslate"><span class="pre">'logits'</span></code> and
+<code class="docutils literal notranslate"><span class="pre">'probs'</span></code>, both <code class="docutils literal notranslate"><span class="pre">(n_times,</span> <span class="pre">batch,</span> <span class="pre">4)</span></code> (class index 3 = seizure). Loaded models
+are cached (one session per name/device/threads/GPU).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel" title="brainmaze_eeg_models.runtime.OnnxModel">OnnxModel</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If <code class="docutils literal notranslate"><span class="pre">model_name</span></code> is not one of the bundled models.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="installation.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Installation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="spindles.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Sleep spindles (OpenSpindleNet)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conventions-both-levels">Conventions (both levels)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-high-level-one-channel">Example (high level, one channel)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-low-level-batch-of-300-s-windows">Example (low level, batch of 300 s windows)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-from-brainmaze-torch">Moving from brainmaze-torch</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation">Validation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.seizure.predict_channel_seizure_probability"><code class="docutils literal notranslate"><span class="pre">predict_channel_seizure_probability()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.seizure.preprocess_input"><code class="docutils literal notranslate"><span class="pre">preprocess_input()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.seizure.infer_seizure_probability"><code class="docutils literal notranslate"><span class="pre">infer_seizure_probability()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.seizure.load_trained_model"><code class="docutils literal notranslate"><span class="pre">load_trained_model()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Filip Mivalt M.Sc., Ph.D.
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2020-present, Mayo Clinic Department of Neurology - Laboratory of Bioelectronics Neurophysiology and Engineering. All rights reserved.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

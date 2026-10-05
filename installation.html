@@ -48,7 +48,7 @@
     <link rel="icon" href="_static/brainmaze_173x173.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Sleep spindles (OpenSpindleNet)" href="spindles.html" />
+    <link rel="next" title="Seizure probability (iEEG)" href="seizure.html" />
     <link rel="prev" title="BrainMaze - EEG Models" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -205,6 +205,7 @@
         </ul>
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seizure.html">Seizure probability (iEEG)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spindles.html">Sleep spindles (OpenSpindleNet)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a></li>
 <li class="toctree-l1"><a class="reference internal" href="runtime.html">Runtime (ONNX Runtime, CPU / GPU)</a></li>
@@ -460,7 +461,9 @@ models have not been measured yet.</p>
 <p>Every model takes <code class="docutils literal notranslate"><span class="pre">device='auto'</span> <span class="pre">|</span> <span class="pre">'cpu'</span> <span class="pre">|</span> <span class="pre">'cuda'</span></code>. <code class="docutils literal notranslate"><span class="pre">'cuda'</span></code> never falls back to the CPU
 silently (ONNX Runtime itself does when the CUDA libraries cannot be loaded): it raises an
 error explaining what is missing. <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> uses CUDA when it initialises and the CPU
-otherwise, with a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> when a GPU setup is installed but unusable.</p>
+otherwise, with a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> when a GPU setup is installed but unusable.
+The default is <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> for the spindle detector and <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> for the seizure functions
+(compatibility with brainmaze-torch 0.2.0).</p>
 </section>
 </section>
 
@@ -485,11 +488,11 @@ otherwise, with a <code class="xref py py-class docutils literal notranslate"><s
       </div>
     </a>
     <a class="right-next"
-       href="spindles.html"
+       href="seizure.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Sleep spindles (OpenSpindleNet)</p>
+        <p class="prev-next-title">Seizure probability (iEEG)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

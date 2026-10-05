@@ -204,6 +204,7 @@
         </ul>
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seizure.html">Seizure probability (iEEG)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spindles.html">Sleep spindles (OpenSpindleNet)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a></li>
 <li class="toctree-l1"><a class="reference internal" href="runtime.html">Runtime (ONNX Runtime, CPU / GPU)</a></li>
@@ -375,6 +376,7 @@
             </div>
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#seizure-detection">Seizure detection</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#openspindlenet">OpenSpindleNet</a></li>
 </ul>
             </nav>
@@ -390,6 +392,16 @@
   <section id="credits-and-licences">
 <h1>Credits and licences<a class="headerlink" href="#credits-and-licences" title="Link to this heading">#</a></h1>
 <p>brainmaze-eeg-models is licensed under the BSD 3-Clause License.</p>
+<section id="seizure-detection">
+<h2>Seizure detection<a class="headerlink" href="#seizure-detection" title="Link to this heading">#</a></h2>
+<p>The seizure models were developed at the Mayo Clinic (Bioelectronics Neurophysiology and
+Engineering Lab) and were previously distributed in brainmaze-torch. Please cite:</p>
+<blockquote>
+<div><p>V. Sladky et al., “Distributed brain co-processor for tracking spikes, seizures and
+behaviour during electrical brain stimulation”, <em>Brain Communications</em> 4(3), 2022,
+doi:10.1093/braincomms/fcac115.</p>
+</div></blockquote>
+</section>
 <section id="openspindlenet">
 <h2>OpenSpindleNet<a class="headerlink" href="#openspindlenet" title="Link to this heading">#</a></h2>
 <p>The spindle models (<code class="docutils literal notranslate"><span class="pre">spindle-detector-eeg.onnx</span></code>, <code class="docutils literal notranslate"><span class="pre">spindle-detector-ieeg.onnx</span></code>, unchanged)
@@ -446,6 +458,7 @@ reliable sleep spindle detection in scalp and intracranial EEG”,
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#seizure-detection">Seizure detection</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#openspindlenet">OpenSpindleNet</a></li>
 </ul>
   </nav></div>
