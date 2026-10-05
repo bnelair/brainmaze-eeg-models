@@ -1,17 +1,32 @@
 BrainMaze - EEG Models
 ======================
 
-Ready-to-use trained models for brain electrophysiology (EEG / iEEG), running on
-`ONNX Runtime <https://onnxruntime.ai/>`_ (inference only; PyTorch is not needed).
+Ready-to-use trained models for brain electrophysiology (EEG / iEEG), part of the
+`BrainMaze <https://github.com/bnelair>`_ family. Inference only: the models run on
+`ONNX Runtime <https://onnxruntime.ai/>`_, on the CPU by default or on an NVIDIA GPU;
+PyTorch is not needed.
 
 Version |release|. Source: https://github.com/bnelair/brainmaze-eeg-models
 
-.. note::
+.. list-table::
+   :header-rows: 1
 
-   The package is under construction; the models are added in the following pull requests.
+   * - model
+     - module
+     - output
+   * - OpenSpindleNet (scalp EEG / iEEG)
+     - :mod:`brainmaze_eeg_models.spindles`
+     - spindle intervals (s) + confidence, and the time that could not be evaluated
+
+The package is built for long, multichannel recordings with gaps (NaN). Missing data never
+turns into silent zeros or a silent "no event": every result states where the model could not
+look at the data.
 
 .. toctree::
    :maxdepth: 2
 
+   installation
    spindles
+   demos
    runtime
+   credits

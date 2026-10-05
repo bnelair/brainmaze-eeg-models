@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>BrainMaze - EEG Models &#8212; BrainMaze: A Toolbox to Analyze Brain Electrophysiology, Behavior and Dynamics - EEG Models</title>
+    <title>Installation &#8212; BrainMaze: A Toolbox to Analyze Brain Electrophysiology, Behavior and Dynamics - EEG Models</title>
   
   
   
@@ -43,12 +43,13 @@
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'installation';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="icon" href="_static/brainmaze_173x173.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="next" title="Sleep spindles (OpenSpindleNet)" href="spindles.html" />
+    <link rel="prev" title="BrainMaze - EEG Models" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.0.0" />
@@ -136,6 +137,10 @@
   
 
   
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
 </div>
 
     </header>
@@ -145,8 +150,6 @@
     <div class="bd-container__inner bd-page-width">
       
       
-      
-        
       
       <dialog id="pst-primary-sidebar-modal"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
@@ -167,7 +170,7 @@
     
   
 
-<a class="navbar-brand logo" href="#">
+<a class="navbar-brand logo" href="index.html">
   
   
   
@@ -194,14 +197,14 @@
     <div class="bd-toc-item navbar-nav active">
         
         <ul class="nav bd-sidenav bd-sidenav__home-link">
-            <li class="toctree-l1 current active">
-                <a class="reference internal" href="#">
+            <li class="toctree-l1">
+                <a class="reference internal" href="index.html">
                     BrainMaze - EEG Models
                 </a>
             </li>
         </ul>
-        <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spindles.html">Sleep spindles (OpenSpindleNet)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a></li>
 <li class="toctree-l1"><a class="reference internal" href="runtime.html">Runtime (ONNX Runtime, CPU / GPU)</a></li>
@@ -280,7 +283,7 @@
       
       
       
-      <li><a href="_sources/index.rst" target="_blank"
+      <li><a href="_sources/installation.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -350,7 +353,9 @@
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
 </button>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -361,11 +366,20 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>BrainMaze - EEG Models</h1>
+    <h1>Installation</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-default">CPU (default)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nvidia-gpu">NVIDIA GPU</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -375,62 +389,79 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="brainmaze-eeg-models">
-<h1>BrainMaze - EEG Models<a class="headerlink" href="#brainmaze-eeg-models" title="Link to this heading">#</a></h1>
-<p>Ready-to-use trained models for brain electrophysiology (EEG / iEEG), part of the
-<a class="reference external" href="https://github.com/bnelair">BrainMaze</a> family. Inference only: the models run on
-<a class="reference external" href="https://onnxruntime.ai/">ONNX Runtime</a>, on the CPU by default or on an NVIDIA GPU;
-PyTorch is not needed.</p>
-<p>Version 0.0.0. Source: <a class="github reference external" href="https://github.com/bnelair/brainmaze-eeg-models">bnelair/brainmaze-eeg-models</a></p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>model</p></th>
-<th class="head"><p>module</p></th>
-<th class="head"><p>output</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>OpenSpindleNet (scalp EEG / iEEG)</p></td>
-<td><p><a class="reference internal" href="spindles.html#module-brainmaze_eeg_models.spindles" title="brainmaze_eeg_models.spindles"><code class="xref py py-mod docutils literal notranslate"><span class="pre">brainmaze_eeg_models.spindles</span></code></a></p></td>
-<td><p>spindle intervals (s) + confidence, and the time that could not be evaluated</p></td>
-</tr>
-</tbody>
-</table>
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h1>
+<p>Python &gt;= 3.10. Dependencies: <code class="docutils literal notranslate"><span class="pre">numpy</span></code>, <code class="docutils literal notranslate"><span class="pre">scipy</span></code>, <code class="docutils literal notranslate"><span class="pre">onnxruntime</span></code> and
+<code class="docutils literal notranslate"><span class="pre">brainmaze-utils</span> <span class="pre">&gt;=</span> <span class="pre">3.0.0</span></code>. No sample data and no PyTorch are installed.</p>
+<section id="cpu-default">
+<h2>CPU (default)<a class="headerlink" href="#cpu-default" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>brainmaze-eeg-models
+</pre></div>
 </div>
-<p>The package is built for long, multichannel recordings with gaps (NaN). Missing data never
-turns into silent zeros or a silent “no event”: every result states where the model could not
-look at the data.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#cpu-default">CPU (default)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#nvidia-gpu">NVIDIA GPU</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="spindles.html">Sleep spindles (OpenSpindleNet)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="spindles.html#interpreting-the-output">Interpreting the output</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spindles.html#validation-against-the-original-package">Validation against the original package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spindles.html#performance">Performance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spindles.html#api">API</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="demos.html#sleep-spindles-on-one-night-of-scalp-eeg">Sleep spindles on one night of scalp EEG</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="runtime.html">Runtime (ONNX Runtime, CPU / GPU)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="runtime.html#gpu-installation-nvidia">GPU installation (NVIDIA)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel"><code class="docutils literal notranslate"><span class="pre">OnnxModel</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.available_providers"><code class="docutils literal notranslate"><span class="pre">available_providers()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.device_report"><code class="docutils literal notranslate"><span class="pre">device_report()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits and licences</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="credits.html#openspindlenet">OpenSpindleNet</a></li>
-</ul>
-</li>
-</ul>
+<p>On Python 3.10 pip installs <code class="docutils literal notranslate"><span class="pre">onnxruntime</span></code> 1.23 (the last release with Python 3.10 wheels);
+any <code class="docutils literal notranslate"><span class="pre">onnxruntime</span> <span class="pre">&gt;=</span> <span class="pre">1.19</span></code> works.</p>
+</section>
+<section id="nvidia-gpu">
+<h2>NVIDIA GPU<a class="headerlink" href="#nvidia-gpu" title="Link to this heading">#</a></h2>
+<p>There is no <code class="docutils literal notranslate"><span class="pre">[gpu]</span></code> extra, on purpose. <code class="docutils literal notranslate"><span class="pre">onnxruntime</span></code> (CPU) and <code class="docutils literal notranslate"><span class="pre">onnxruntime-gpu</span></code> install
+<strong>the same Python module</strong> (<code class="docutils literal notranslate"><span class="pre">onnxruntime</span></code>): with both installed the CPU build usually wins
+without any error (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">check</span></code> passes), and uninstalling one breaks the other. Install the
+package, then swap the runtime, and check:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>brainmaze-eeg-models
+pip<span class="w"> </span>uninstall<span class="w"> </span>-y<span class="w"> </span>onnxruntime
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"onnxruntime-gpu[cuda,cudnn]"</span><span class="w">     </span><span class="c1"># also installs matching CUDA + cuDNN wheels</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import onnxruntime as ort; print(ort.get_available_providers())"</span>
+<span class="c1"># must list CUDAExecutionProvider</span>
+</pre></div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">[cuda,cudnn]</span></code> extras install CUDA and cuDNN as pip packages, which the package loads with
+<code class="docutils literal notranslate"><span class="pre">onnxruntime.preload_dlls()</span></code> (once per process; its messages are shown by <code class="docutils literal notranslate"><span class="pre">device_report()</span></code>
+instead of being printed).</p>
+<p><strong>Upgrading.</strong> <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-U</span> <span class="pre">brainmaze-eeg-models</span></code> re-installs the CPU <code class="docutils literal notranslate"><span class="pre">onnxruntime</span></code> (a
+dependency), which overwrites the GPU module again. In a GPU environment upgrade with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>--no-deps<span class="w"> </span>brainmaze-eeg-models
+</pre></div>
+</div>
+<p>or redo the swap afterwards. <code class="docutils literal notranslate"><span class="pre">device='auto'</span></code> warns when both packages are installed and the
+CPU build is active, and <code class="docutils literal notranslate"><span class="pre">device_report()</span></code> prints a <code class="docutils literal notranslate"><span class="pre">CONFLICT</span></code> line.</p>
+<p><strong>CUDA versions.</strong> <code class="docutils literal notranslate"><span class="pre">onnxruntime-gpu</span></code> &gt;= 1.27 on PyPI is built for <strong>CUDA 13</strong> + cuDNN 9 and
+needs a driver that supports CUDA 13. For a CUDA 12 system (e.g. a cluster with an older driver,
+or a PyTorch install sharing CUDA 12 libraries), use Microsoft’s CUDA 12 feed. These builds need
+<strong>CUDA 12.8 or newer</strong> (versions 1.27-1.29 for Python 3.11-3.14 as of 2026-10; use the newest one
+listed on the feed):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>uninstall<span class="w"> </span>-y<span class="w"> </span>onnxruntime<span class="w"> </span>onnxruntime-gpu
+pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>onnxruntime-gpu<span class="o">==</span><span class="m">1</span>.29.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--index-url<span class="w"> </span>https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
+pip<span class="w"> </span>install<span class="w"> </span>nvidia-cuda-runtime-cu12<span class="w"> </span>nvidia-cudnn-cu12<span class="w"> </span>nvidia-cublas-cu12<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>nvidia-cufft-cu12<span class="w"> </span>nvidia-curand-cu12<span class="w"> </span>nvidia-cuda-nvrtc-cu12<span class="w">   </span><span class="c1"># or a system CUDA &gt;= 12.8 + cuDNN 9</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">--no-deps</span></code> with an exact version keeps pip from taking the same version from PyPI (the CUDA 13
+build); the other dependencies are already installed with the CPU package.</p>
+<p><strong>Python 3.10.</strong> The newest <code class="docutils literal notranslate"><span class="pre">onnxruntime-gpu</span></code> with Python 3.10 wheels is 1.23.2, a CUDA 12
+build, so on Python 3.10 the first recipe gives CUDA 12 (its <code class="docutils literal notranslate"><span class="pre">[cuda,cudnn]</span></code> extras install the
+<code class="docutils literal notranslate"><span class="pre">-cu12</span></code> wheels). See the <a class="reference external" href="https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements">ONNX Runtime CUDA requirements</a>.</p>
+<p>On the GPU, TF32 matrix maths is <strong>disabled</strong> by default (ONNX Runtime enables it, which changes
+results at the ~1e-3 level on Ampere and newer GPUs); with it off, GPU and CPU outputs are
+expected to agree to float32 rounding. <a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel" title="brainmaze_eeg_models.runtime.OnnxModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">OnnxModel</span></code></a> takes
+<code class="docutils literal notranslate"><span class="pre">cuda_tf32=True</span></code> to allow it.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Limitation: the GPU path is not yet tested on a GPU.</strong> The tests cover it with mocked ONNX
+Runtime sessions, and it was run with a real <code class="docutils literal notranslate"><span class="pre">onnxruntime-gpu</span></code> on a host without a GPU
+(<code class="docutils literal notranslate"><span class="pre">'cuda'</span></code> raises, <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> warns and uses the CPU). GPU-vs-CPU numbers for the bundled
+models have not been measured yet.</p>
+</div>
+<p>Check what is installed and usable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">brainmaze_eeg_models.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">device_report</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">device_report</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Every model takes <code class="docutils literal notranslate"><span class="pre">device='auto'</span> <span class="pre">|</span> <span class="pre">'cpu'</span> <span class="pre">|</span> <span class="pre">'cuda'</span></code>. <code class="docutils literal notranslate"><span class="pre">'cuda'</span></code> never falls back to the CPU
+silently (ONNX Runtime itself does when the CUDA libraries cannot be loaded): it raises an
+error explaining what is missing. <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> uses CUDA when it initialises and the CPU
+otherwise, with a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> when a GPU setup is installed but unusable.</p>
+</section>
 </section>
 
 
@@ -444,12 +475,21 @@ look at the data.</p>
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">BrainMaze - EEG Models</p>
+      </div>
+    </a>
     <a class="right-next"
-       href="installation.html"
+       href="spindles.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Installation</p>
+        <p class="prev-next-title">Sleep spindles (OpenSpindleNet)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -459,6 +499,24 @@ look at the data.</p>
             </div>
             
             
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-default">CPU (default)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nvidia-gpu">NVIDIA GPU</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

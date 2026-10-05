@@ -48,8 +48,8 @@
     <link rel="icon" href="_static/brainmaze_173x173.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Runtime (ONNX Runtime, CPU / GPU)" href="runtime.html" />
-    <link rel="prev" title="BrainMaze - EEG Models" href="index.html" />
+    <link rel="next" title="Demos" href="demos.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.0.0" />
@@ -204,8 +204,11 @@
             </li>
         </ul>
         <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Sleep spindles (OpenSpindleNet)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a></li>
 <li class="toctree-l1"><a class="reference internal" href="runtime.html">Runtime (ONNX Runtime, CPU / GPU)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits and licences</a></li>
 </ul>
 
     </div>
@@ -373,26 +376,32 @@
             </div>
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector"><code class="docutils literal notranslate"><span class="pre">SpindleDetector</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.device"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.device</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.predict_windows"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.predict_windows()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.detect()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-output">Interpreting the output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-against-the-original-package">Validation against the original package</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector"><code class="docutils literal notranslate"><span class="pre">SpindleDetector</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.device"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.device</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.predict_windows"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.predict_windows()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.detect()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections"><code class="docutils literal notranslate"><span class="pre">SpindleDetections</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.confidence"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.confidence</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.not_evaluated</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.n_channels</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.duration_s"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.duration_s</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.model"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.model</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_array"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_array()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel_intervals"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel_intervals()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.evaluated_fraction()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_dataframe"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_dataframe()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections"><code class="docutils literal notranslate"><span class="pre">SpindleDetections</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.confidence"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.confidence</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.not_evaluated</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.n_channels</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.duration_s"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.duration_s</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.model"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_array"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_array()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel_intervals"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel_intervals()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.evaluated_fraction()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_dataframe"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_dataframe()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.scalogram"><code class="docutils literal notranslate"><span class="pre">scalogram()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.scalogram"><code class="docutils literal notranslate"><span class="pre">scalogram()</span></code></a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -420,6 +429,63 @@ and the differences from the <code class="docutils literal notranslate"><span cl
 ported from OpenSpindleNet (<a class="github reference external" href="https://github.com/CaptainTrojan/openspindlenet">CaptainTrojan/openspindlenet</a>, MIT License,
 Copyright (c) 2025 CaptainTrojan; full notice in NOTICE.md). Please cite
 Seják et al., Computers in Biology and Medicine 197 (2025) 110854.</p>
+<section id="interpreting-the-output">
+<h2>Interpreting the output<a class="headerlink" href="#interpreting-the-output" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Times are seconds from the first sample of the input. Each spindle has a <code class="docutils literal notranslate"><span class="pre">start</span></code>, an
+<code class="docutils literal notranslate"><span class="pre">end</span></code> (at most 2 s apart: the model’s maximum duration; <strong>no minimum duration is
+enforced</strong>, and intervals clipped at a window or recording edge can be very short, so filter
+short events yourself if your definition needs one) and a <code class="docutils literal notranslate"><span class="pre">confidence</span></code> (the model’s
+sigmoid output, &gt;= <code class="docutils literal notranslate"><span class="pre">confidence_threshold</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">not_evaluated[ch]</span></code> lists, per channel, the time where no spindle can be reported: gaps
+(NaN/inf and flat runs) widened by <code class="docutils literal notranslate"><span class="pre">gap_margin_s</span></code>, and windows skipped for too little valid
+data. <strong>No spindle there means “not evaluated”, not “no spindle”.</strong> Densities (spindles per
+minute) must be computed over the evaluated time only
+(<a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction" title="brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction"><code class="xref py py-meth docutils literal notranslate"><span class="pre">evaluated_fraction()</span></code></a>).</p></li>
+<li><p>The models detect spindle-like activity in any state; in wake many detections are alpha
+bursts. Restrict analyses to NREM sleep with a hypnogram.</p></li>
+</ul>
+</section>
+<section id="validation-against-the-original-package">
+<h2>Validation against the original package<a class="headerlink" href="#validation-against-the-original-package" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Single windows:</strong> with <code class="docutils literal notranslate"><span class="pre">flat_s=None,</span> <span class="pre">demean=False</span></code> a 30 s, 250 Hz input gives the same
+network outputs (within 1e-5) and the same intervals (within 0.01 samples) as
+<code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> 0.1.1 on its two sample windows (golden tests, also run live against the
+installed original). With the defaults, the eeg sample gives the same spindles (confidences
+within 0.01).</p></li>
+<li><p><strong>Multiple windows:</strong> on 6 min (12 windows) of a scalp night, <code class="docutils literal notranslate"><span class="pre">step_s=30</span></code> with the other
+settings at their defaults gives the same intervals as <code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> run window by window
+(eeg: within 0.5 samples and 0.01 confidence, the difference being demeaning; ieeg:
+identical); with the default 20 s step, 94-96 % (eeg) / 89 % (ieeg) of the spindles agree.
+An independent 1 h check gave 204 vs 204 spindles (<code class="docutils literal notranslate"><span class="pre">step_s=30</span></code>, <code class="docutils literal notranslate"><span class="pre">demean=False</span></code>).</p></li>
+<li><p>The one deliberate difference: <code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> drops a spindle whose interval starts
+exactly at the first sample of a window (the iEEG sample has one, 0-0.87 s, confidence 0.6;
+about 2 % of the detections on a long recording); it is kept here.</p></li>
+<li><p>The batched wavelet transform equals <code class="docutils literal notranslate"><span class="pre">pywt.cwt</span></code> (float64, the training-time wavelet
+sampling) to a relative error below 1e-14. Training computed it on float32 data, which moves
+the model outputs by &lt;= 0.006 (see <a class="reference internal" href="#brainmaze_eeg_models.spindles.scalogram" title="brainmaze_eeg_models.spindles.scalogram"><code class="xref py py-func docutils literal notranslate"><span class="pre">scalogram()</span></code></a>).</p></li>
+<li><p>Training resampled with <code class="docutils literal notranslate"><span class="pre">np.interp</span></code> (no anti-aliasing), the port with
+<code class="docutils literal notranslate"><span class="pre">scipy.signal.resample_poly</span></code>: 854 vs 861 spindles on a 6.8 h night (93-94 % agreement), F1
+0.570 vs 0.572 on DREAMS.</p></li>
+</ul>
+</section>
+<section id="performance">
+<h2>Performance<a class="headerlink" href="#performance" title="Link to this heading">#</a></h2>
+<p>Measured on a Xeon E5-1650 v2 (2013, 6 cores / 12 threads, all threads used; CPU only): the
+wavelet transform takes about 6 ms per 30 s window (18 ms with one thread; <code class="docutils literal notranslate"><span class="pre">pywt</span></code>: 1.2 s), the
+network 0.12-0.2 s per window. With the default 20 s step a channel runs at 90-96x real
+time (the 6.8 h demo night in 253-271 s; more on a loaded machine). <code class="docutils literal notranslate"><span class="pre">step_s=30</span></code> (no
+overlap, as the original) is 1.5x faster but less stable at window edges (90.7 % of the
+spindles agree with the 20 s step; 10 s vs 20 s: 94.6 %). A GPU (<code class="docutils literal notranslate"><span class="pre">device='cuda'</span></code>) should
+remove most of the network cost (not yet measured).</p>
+<p>Memory: channels are processed one at a time, but each channel is held whole at its original
+rate in float64, in a few copies (e.g. 22 GB per copy for 24 h at 32 kHz). Downsample long
+high-rate recordings beforehand or process them in overlapping segments (see
+<a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetector" title="brainmaze_eeg_models.spindles.SpindleDetector"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpindleDetector</span></code></a>, <em>Memory</em>).</p>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetector">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">brainmaze_eeg_models.spindles.</span></span><span class="sig-name descname"><span class="pre">SpindleDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eeg'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nms_iou_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_valid_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_margin_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flat_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">demean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetector" title="Link to this definition">#</a></dt>
@@ -714,6 +780,7 @@ independently with zero padding at its edges (as <code class="docutils literal n
 </dd></dl>
 
 </section>
+</section>
 
 
                 </article>
@@ -727,20 +794,20 @@ independently with zero padding at its edges (as <code class="docutils literal n
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="installation.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">BrainMaze - EEG Models</p>
+        <p class="prev-next-title">Installation</p>
       </div>
     </a>
     <a class="right-next"
-       href="runtime.html"
+       href="demos.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Runtime (ONNX Runtime, CPU / GPU)</p>
+        <p class="prev-next-title">Demos</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -762,26 +829,32 @@ independently with zero padding at its edges (as <code class="docutils literal n
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector"><code class="docutils literal notranslate"><span class="pre">SpindleDetector</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.device"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.device</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.predict_windows"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.predict_windows()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.detect()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-output">Interpreting the output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-against-the-original-package">Validation against the original package</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector"><code class="docutils literal notranslate"><span class="pre">SpindleDetector</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.device"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.device</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.predict_windows"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.predict_windows()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.detect()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections"><code class="docutils literal notranslate"><span class="pre">SpindleDetections</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.confidence"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.confidence</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.not_evaluated</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.n_channels</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.duration_s"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.duration_s</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.model"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.model</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_array"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_array()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel_intervals"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel_intervals()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.evaluated_fraction()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_dataframe"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_dataframe()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections"><code class="docutils literal notranslate"><span class="pre">SpindleDetections</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.confidence"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.confidence</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.not_evaluated</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.n_channels</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.duration_s"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.duration_s</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.model"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_array"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_array()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel_intervals"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel_intervals()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.evaluated_fraction()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_dataframe"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_dataframe()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.scalogram"><code class="docutils literal notranslate"><span class="pre">scalogram()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.scalogram"><code class="docutils literal notranslate"><span class="pre">scalogram()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
