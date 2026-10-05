@@ -3,6 +3,16 @@ Credits and licences
 
 brainmaze-eeg-models is licensed under the BSD 3-Clause License.
 
+Seizure detection
+-----------------
+
+The seizure models were developed at the Mayo Clinic (Bioelectronics Neurophysiology and
+Engineering Lab) and were previously distributed in brainmaze-torch. Please cite:
+
+    V. Sladky et al., "Distributed brain co-processor for tracking spikes, seizures and
+    behaviour during electrical brain stimulation", *Brain Communications* 4(3), 2022,
+    doi:10.1093/braincomms/fcac115.
+
 OpenSpindleNet
 --------------
 
