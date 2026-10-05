@@ -27,8 +27,13 @@ package, then swap the runtime, and check:
     pip install brainmaze-eeg-models
     pip uninstall -y onnxruntime
     pip install "onnxruntime-gpu[cuda,cudnn]"     # also installs matching CUDA + cuDNN wheels
-    python -c "import onnxruntime as ort; print(ort.get_available_providers())"
-    # must list CUDAExecutionProvider
+    python -c "import brainmaze_eeg_models as bm; print(bm.check_gpu())"
+
+:func:`~brainmaze_eeg_models.runtime.check_gpu` creates a CUDA session and runs a small
+inference on the GPU; it raises with the reason and what to install if CUDA does not work.
+``CUDAExecutionProvider`` in ``onnxruntime.get_available_providers()`` is not enough: a GPU
+build without usable CUDA libraries lists it too, and then every session runs on the CPU.
+``SpindleDetector('eeg', device='cuda')`` also raises if its CUDA session cannot be created.
 
 The ``[cuda,cudnn]`` extras install CUDA and cuDNN as pip packages, which the package loads with
 ``onnxruntime.preload_dlls()`` (once per process; its messages are shown by ``device_report()``
@@ -46,9 +51,17 @@ CPU build is active, and ``device_report()`` prints a ``CONFLICT`` line.
 
 **CUDA versions.** ``onnxruntime-gpu`` >= 1.27 on PyPI is built for **CUDA 13** + cuDNN 9 and
 needs a driver that supports CUDA 13. For a CUDA 12 system (e.g. a cluster with an older driver,
-or a PyTorch install sharing CUDA 12 libraries), use Microsoft's CUDA 12 feed. These builds need
-**CUDA 12.8 or newer** (versions 1.27-1.29 for Python 3.11-3.14 as of 2026-10; use the newest one
-listed on the feed):
+or a PyTorch install sharing CUDA 12 libraries), the simplest route is the last CUDA 12 builds on
+PyPI, 1.24-1.26 (Python >= 3.11), whose ``[cuda,cudnn]`` extras install the ``-cu12`` CUDA and
+cuDNN wheels:
+
+.. code-block:: bash
+
+    pip uninstall -y onnxruntime onnxruntime-gpu
+    pip install "onnxruntime-gpu[cuda,cudnn]<1.27"
+
+For a newer CUDA 12 build use Microsoft's CUDA 12 feed. These builds need **CUDA 12.8 or newer**
+(versions 1.27-1.29 for Python 3.11-3.14 as of 2026-10; use the newest one listed on the feed):
 
 .. code-block:: bash
 
@@ -58,8 +71,10 @@ listed on the feed):
     pip install nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cublas-cu12 \
         nvidia-cufft-cu12 nvidia-curand-cu12 nvidia-cuda-nvrtc-cu12   # or a system CUDA >= 12.8 + cuDNN 9
 
-``--no-deps`` with an exact version keeps pip from taking the same version from PyPI (the CUDA 13
-build); the other dependencies are already installed with the CPU package.
+``--no-deps`` because the feed also mirrors other packages in old versions (without it, pip
+would install e.g. numpy 2.1.2 and protobuf 5.28.3 from the feed into an empty environment); the
+dependencies are already installed with the CPU package. With ``--index-url`` pip does not look
+at PyPI at all, so the CUDA 13 build on PyPI is never a candidate.
 
 **Python 3.10.** The newest ``onnxruntime-gpu`` with Python 3.10 wheels is 1.23.2, a CUDA 12
 build, so on Python 3.10 the first recipe gives CUDA 12 (its ``[cuda,cudnn]`` extras install the
@@ -78,12 +93,13 @@ expected to agree to float32 rounding. :class:`~brainmaze_eeg_models.runtime.Onn
    (``'cuda'`` raises, ``'auto'`` warns and uses the CPU). GPU-vs-CPU numbers for the bundled
    models have not been measured yet.
 
-Check what is installed and usable:
+Check what is installed (``device_report()``) and whether CUDA really works (``check_gpu()``):
 
 .. code-block:: python
 
-    from brainmaze_eeg_models.runtime import device_report
-    print(device_report())
+    import brainmaze_eeg_models as bm
+    print(bm.device_report())
+    print(bm.check_gpu())     # raises RuntimeError with the reason if CUDA is unusable
 
 Every model takes ``device='auto' | 'cpu' | 'cuda'``. ``'cuda'`` never falls back to the CPU
 silently (ONNX Runtime itself does when the CUDA libraries cannot be loaded): it raises an

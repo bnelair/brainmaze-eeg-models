@@ -378,6 +378,7 @@
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-output">Interpreting the output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sampling-rate-and-preprocessing">Sampling rate and preprocessing</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-against-the-original-package">Validation against the original package</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">
@@ -446,6 +447,31 @@ minute) must be computed over the evaluated time only
 <li><p>The models detect spindle-like activity in any state; in wake many detections are alpha
 bursts. Restrict analyses to NREM sleep with a hypnogram.</p></li>
 </ul>
+</section>
+<section id="sampling-rate-and-preprocessing">
+<h2>Sampling rate and preprocessing<a class="headerlink" href="#sampling-rate-and-preprocessing" title="Link to this heading">#</a></h2>
+<p>Any rate &gt;= 50 Hz is accepted, but <strong>the spindle counts depend on the band above ~25-60 Hz</strong>,
+not only on the spindle band (11-16 Hz): the network sees the whole z-scored signal. On the
+same hour of a scalp night (demo night, ‘eeg’ model, defaults; the 250 Hz signal presented at
+other rates with an anti-aliased resampler):</p>
+<ul class="simple">
+<li><p>250 Hz: 231 spindles; 512-4096 Hz: the same 231; 256 Hz: 232 (1 extra);</p></li>
+<li><p>200 Hz: 234 (recall 0.996, precision 0.983 vs 250 Hz);</p></li>
+<li><p>128 Hz: 247 (+7 %); 100 Hz: 291 (+26 %); 50 Hz: 313 (+35 %);</p></li>
+<li><p>250 Hz after a 60 Hz notch filter alone: 273 (+18 %).</p></li>
+</ul>
+<p>Low-pass filtering the 250 Hz signal at 25 / 50 Hz gives 315 / 290 spindles, matching the
+50 / 100 Hz runs at 99 %, so the resampler is consistent and the difference is the missing band
+(in this recording, line noise at 58-62 Hz holds 2.9 % of the power, the spindle band 3.5 %).
+<a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect" title="brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">detect()</span></code></a> warns when <code class="docutils literal notranslate"><span class="pre">fs</span></code> &lt; 200 Hz; it
+cannot tell whether a higher-rate recording was notch or low-pass filtered before. <strong>Use the
+same sampling rate and the same preprocessing for every recording of a study</strong> (or compare
+only recordings processed alike).</p>
+<p>These measurements show only that the counts differ. Which rate or preprocessing agrees best
+with expert scoring was <strong>not measured</strong> (the counts are relative to the full-band 250 Hz run,
+not to a ground truth); that the full band at &gt;= 200 Hz is closest to the training data is a
+plausible but untested hypothesis (whether the training recordings were notch filtered is not
+documented).</p>
 </section>
 <section id="validation-against-the-original-package">
 <h2>Validation against the original package<a class="headerlink" href="#validation-against-the-original-package" title="Link to this heading">#</a></h2>
@@ -578,10 +604,10 @@ next to them are dropped and the time is reported as not evaluated. Flat runs
 (zero-filled dropouts, disconnected or saturated channels) are treated as gaps.</p></li>
 <li><p>With the ‘eeg’ model each window is demeaned before the scalogram (<code class="docutils literal notranslate"><span class="pre">demean='auto'</span></code>).</p></li>
 <li><p>Any length &gt;= 30 s and any sampling rate &gt;= 50 Hz is accepted (the original: exactly
-7500 samples, assumed to be at 250 Hz). Rates below 250 Hz are upsampled; spindles
-(11-16 Hz) are below the Nyquist rate, but the scalogram’s top scales (up to 24 Hz)
-lose energy near the original Nyquist rate. The ‘eeg’ model’s training data included
-50, 100 and 200 Hz DREAMS recordings upsampled to 250 Hz (by linear interpolation).</p></li>
+7500 samples, assumed to be at 250 Hz). Rates below 250 Hz are upsampled. The ‘eeg’
+model’s training data included 50, 100 and 200 Hz DREAMS recordings upsampled to
+250 Hz (by linear interpolation). See <em>Sampling rate and preprocessing</em> below: low
+rates are accepted, but they do change the results.</p></li>
 </ul>
 <p>With <code class="docutils literal notranslate"><span class="pre">flat_s=None,</span> <span class="pre">demean=False</span></code> a 250 Hz input gives the same intervals as
 <code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> run window by window with <code class="docutils literal notranslate"><span class="pre">step_s=30</span></code> (pinned by golden tests on
@@ -589,6 +615,70 @@ single windows and on a 6 min multi-window recording), apart from the
 spindle-at-sample-0 case. The ‘ieeg’ model’s defaults (<code class="docutils literal notranslate"><span class="pre">demean='auto'</span></code> = off) give the
 same; the ‘eeg’ defaults differ only through demeaning (tested: same spindles, confidence
 differences &lt; 0.01).</p>
+<p class="rubric">Sampling rate and preprocessing</p>
+<p>The network sees the z-scored raw signal as well as the scalogram, so its output depends
+on the <strong>whole band up to 125 Hz</strong>, not only on the spindle band (11-16 Hz). Measured on
+the same hour of a scalp night (Fz-Cz, demo night, ‘eeg’ model, defaults), presented at
+different rates with an anti-aliased resampler (<code class="docutils literal notranslate"><span class="pre">resample_poly</span></code>):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>input rate / processing</p></th>
+<th class="head"><p>spindles</p></th>
+<th class="head"><p>vs the 250 Hz run (IoU &gt;= 0.3)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>250 Hz and &gt;= 256 Hz</p></td>
+<td><p>231-232</p></td>
+<td><p>identical, except 1 extra at 256 Hz</p></td>
+</tr>
+<tr class="row-odd"><td><p>200 Hz</p></td>
+<td><p>234</p></td>
+<td><p>recall 0.996, precision 0.983</p></td>
+</tr>
+<tr class="row-even"><td><p>128 Hz</p></td>
+<td><p>247 (+7 %)</p></td>
+<td><p>recall 0.991, precision 0.927</p></td>
+</tr>
+<tr class="row-odd"><td><p>100 Hz</p></td>
+<td><p>291 (+26 %)</p></td>
+<td><p>recall 0.983, precision 0.780</p></td>
+</tr>
+<tr class="row-even"><td><p>50 Hz</p></td>
+<td><p>313 (+35 %)</p></td>
+<td><p>recall 0.970, precision 0.716</p></td>
+</tr>
+<tr class="row-odd"><td><p>250 Hz, 60 Hz notch only</p></td>
+<td><p>273 (+18 %)</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The 250 Hz signal low-pass filtered at 25 / 50 Hz gives 315 / 290 spindles, matching the
+50 / 100 Hz runs at 99 %: the difference comes from the missing band above the lower
+Nyquist rate (here line noise at 58-62 Hz is 2.9 % of the power, the spindle band
+3.5 %), not from the resampler. The extra detections are mostly additional detections,
+not shifted copies of the 250 Hz ones (recall vs 250 Hz stays &gt;= 0.97); whether they are
+spindles was not checked. The shared ones agree well (median edge difference 11-12 ms at
+50-100 Hz).</p>
+<p>Consequences:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect" title="brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">detect()</span></code></a> warns (<code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>) when <code class="docutils literal notranslate"><span class="pre">fs</span></code> &lt; 200 Hz (<code class="xref py py-data docutils literal notranslate"><span class="pre">FS_WARN</span></code>).
+It cannot see whether a higher-rate recording was low-pass or notch filtered before
+(scalp EEG has little power above 40 Hz anyway, so a power test would not tell a
+filtered recording from a clean one), so check your own pipeline.</p></li>
+<li><p><strong>Within a study, use the same sampling rate and the same preprocessing (notch,
+low-pass, re-referencing) for every recording,</strong> or compare densities only between
+recordings processed alike. Absolute spindle densities from data below 200 Hz, or
+after notch / low-pass filtering below ~60 Hz, are not directly comparable with those
+from full-band data.</p></li>
+<li><p>Which rate or preprocessing agrees best with expert scoring was <strong>not measured</strong>: the
+counts above are relative to the full-band 250 Hz run only, not to a ground truth. (It
+is a plausible but untested hypothesis that the full band at &gt;= 200 Hz is closest to
+the training data; whether the training recordings were notch filtered is not
+documented.)</p></li>
+</ul>
 <p class="rubric">Memory</p>
 <p>Channels are processed one at a time, but each whole channel is held at its original rate
 in float64, in a few copies (the input cast, flat-run masking, gap filling and the
@@ -638,7 +728,9 @@ per-sample spindle probability.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>) or </em><em>(</em><a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels" title="brainmaze_eeg_models.spindles.SpindleDetections.n_channels"><em>n_channels</em></a><em>, </em><em>n_samples</em><em>)</em>) – Signal (any units, e.g. uV); NaN/inf mark missing data. At least 30 s long.
 Channels are processed independently (time on the last axis).</p></li>
-<li><p><strong>fs</strong> (<em>float</em>) – Sampling rate (Hz), &gt;= 50 (see the class notes for rates below 250 Hz).</p></li>
+<li><p><strong>fs</strong> (<em>float</em>) – Sampling rate (Hz), &gt;= 50. Below 200 Hz a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> is issued: the
+results depend on the band above ~25-60 Hz (see <em>Sampling rate and
+preprocessing</em> in the class notes).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -831,6 +923,7 @@ independently with zero padding at its edges (as <code class="docutils literal n
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpreting-the-output">Interpreting the output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sampling-rate-and-preprocessing">Sampling rate and preprocessing</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-against-the-original-package">Validation against the original package</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a><ul class="nav section-nav flex-column">

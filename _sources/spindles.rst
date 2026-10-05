@@ -19,6 +19,33 @@ Interpreting the output
 - The models detect spindle-like activity in any state; in wake many detections are alpha
   bursts. Restrict analyses to NREM sleep with a hypnogram.
 
+Sampling rate and preprocessing
+-------------------------------
+
+Any rate >= 50 Hz is accepted, but **the spindle counts depend on the band above ~25-60 Hz**,
+not only on the spindle band (11-16 Hz): the network sees the whole z-scored signal. On the
+same hour of a scalp night (demo night, 'eeg' model, defaults; the 250 Hz signal presented at
+other rates with an anti-aliased resampler):
+
+- 250 Hz: 231 spindles; 512-4096 Hz: the same 231; 256 Hz: 232 (1 extra);
+- 200 Hz: 234 (recall 0.996, precision 0.983 vs 250 Hz);
+- 128 Hz: 247 (+7 %); 100 Hz: 291 (+26 %); 50 Hz: 313 (+35 %);
+- 250 Hz after a 60 Hz notch filter alone: 273 (+18 %).
+
+Low-pass filtering the 250 Hz signal at 25 / 50 Hz gives 315 / 290 spindles, matching the
+50 / 100 Hz runs at 99 %, so the resampler is consistent and the difference is the missing band
+(in this recording, line noise at 58-62 Hz holds 2.9 % of the power, the spindle band 3.5 %).
+:meth:`~brainmaze_eeg_models.spindles.SpindleDetector.detect` warns when ``fs`` < 200 Hz; it
+cannot tell whether a higher-rate recording was notch or low-pass filtered before. **Use the
+same sampling rate and the same preprocessing for every recording of a study** (or compare
+only recordings processed alike).
+
+These measurements show only that the counts differ. Which rate or preprocessing agrees best
+with expert scoring was **not measured** (the counts are relative to the full-band 250 Hz run,
+not to a ground truth); that the full band at >= 200 Hz is closest to the training data is a
+plausible but untested hypothesis (whether the training recordings were notch filtered is not
+documented).
+
 Validation against the original package
 ---------------------------------------
 

@@ -411,10 +411,14 @@ package, then swap the runtime, and check:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>brainmaze-eeg-models
 pip<span class="w"> </span>uninstall<span class="w"> </span>-y<span class="w"> </span>onnxruntime
 pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"onnxruntime-gpu[cuda,cudnn]"</span><span class="w">     </span><span class="c1"># also installs matching CUDA + cuDNN wheels</span>
-python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import onnxruntime as ort; print(ort.get_available_providers())"</span>
-<span class="c1"># must list CUDAExecutionProvider</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import brainmaze_eeg_models as bm; print(bm.check_gpu())"</span>
 </pre></div>
 </div>
+<p><a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.check_gpu" title="brainmaze_eeg_models.runtime.check_gpu"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_gpu()</span></code></a> creates a CUDA session and runs a small
+inference on the GPU; it raises with the reason and what to install if CUDA does not work.
+<code class="docutils literal notranslate"><span class="pre">CUDAExecutionProvider</span></code> in <code class="docutils literal notranslate"><span class="pre">onnxruntime.get_available_providers()</span></code> is not enough: a GPU
+build without usable CUDA libraries lists it too, and then every session runs on the CPU.
+<code class="docutils literal notranslate"><span class="pre">SpindleDetector('eeg',</span> <span class="pre">device='cuda')</span></code> also raises if its CUDA session cannot be created.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">[cuda,cudnn]</span></code> extras install CUDA and cuDNN as pip packages, which the package loads with
 <code class="docutils literal notranslate"><span class="pre">onnxruntime.preload_dlls()</span></code> (once per process; its messages are shown by <code class="docutils literal notranslate"><span class="pre">device_report()</span></code>
 instead of being printed).</p>
@@ -427,9 +431,15 @@ dependency), which overwrites the GPU module again. In a GPU environment upgrade
 CPU build is active, and <code class="docutils literal notranslate"><span class="pre">device_report()</span></code> prints a <code class="docutils literal notranslate"><span class="pre">CONFLICT</span></code> line.</p>
 <p><strong>CUDA versions.</strong> <code class="docutils literal notranslate"><span class="pre">onnxruntime-gpu</span></code> &gt;= 1.27 on PyPI is built for <strong>CUDA 13</strong> + cuDNN 9 and
 needs a driver that supports CUDA 13. For a CUDA 12 system (e.g. a cluster with an older driver,
-or a PyTorch install sharing CUDA 12 libraries), use Microsoft’s CUDA 12 feed. These builds need
-<strong>CUDA 12.8 or newer</strong> (versions 1.27-1.29 for Python 3.11-3.14 as of 2026-10; use the newest one
-listed on the feed):</p>
+or a PyTorch install sharing CUDA 12 libraries), the simplest route is the last CUDA 12 builds on
+PyPI, 1.24-1.26 (Python &gt;= 3.11), whose <code class="docutils literal notranslate"><span class="pre">[cuda,cudnn]</span></code> extras install the <code class="docutils literal notranslate"><span class="pre">-cu12</span></code> CUDA and
+cuDNN wheels:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>uninstall<span class="w"> </span>-y<span class="w"> </span>onnxruntime<span class="w"> </span>onnxruntime-gpu
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"onnxruntime-gpu[cuda,cudnn]&lt;1.27"</span>
+</pre></div>
+</div>
+<p>For a newer CUDA 12 build use Microsoft’s CUDA 12 feed. These builds need <strong>CUDA 12.8 or newer</strong>
+(versions 1.27-1.29 for Python 3.11-3.14 as of 2026-10; use the newest one listed on the feed):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>uninstall<span class="w"> </span>-y<span class="w"> </span>onnxruntime<span class="w"> </span>onnxruntime-gpu
 pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>onnxruntime-gpu<span class="o">==</span><span class="m">1</span>.29.0<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--index-url<span class="w"> </span>https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
@@ -437,8 +447,10 @@ pip<span class="w"> </span>install<span class="w"> </span>nvidia-cuda-runtime-cu
 <span class="w">    </span>nvidia-cufft-cu12<span class="w"> </span>nvidia-curand-cu12<span class="w"> </span>nvidia-cuda-nvrtc-cu12<span class="w">   </span><span class="c1"># or a system CUDA &gt;= 12.8 + cuDNN 9</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">--no-deps</span></code> with an exact version keeps pip from taking the same version from PyPI (the CUDA 13
-build); the other dependencies are already installed with the CPU package.</p>
+<p><code class="docutils literal notranslate"><span class="pre">--no-deps</span></code> because the feed also mirrors other packages in old versions (without it, pip
+would install e.g. numpy 2.1.2 and protobuf 5.28.3 from the feed into an empty environment); the
+dependencies are already installed with the CPU package. With <code class="docutils literal notranslate"><span class="pre">--index-url</span></code> pip does not look
+at PyPI at all, so the CUDA 13 build on PyPI is never a candidate.</p>
 <p><strong>Python 3.10.</strong> The newest <code class="docutils literal notranslate"><span class="pre">onnxruntime-gpu</span></code> with Python 3.10 wheels is 1.23.2, a CUDA 12
 build, so on Python 3.10 the first recipe gives CUDA 12 (its <code class="docutils literal notranslate"><span class="pre">[cuda,cudnn]</span></code> extras install the
 <code class="docutils literal notranslate"><span class="pre">-cu12</span></code> wheels). See the <a class="reference external" href="https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements">ONNX Runtime CUDA requirements</a>.</p>
@@ -453,9 +465,10 @@ Runtime sessions, and it was run with a real <code class="docutils literal notra
 (<code class="docutils literal notranslate"><span class="pre">'cuda'</span></code> raises, <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> warns and uses the CPU). GPU-vs-CPU numbers for the bundled
 models have not been measured yet.</p>
 </div>
-<p>Check what is installed and usable:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">brainmaze_eeg_models.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">device_report</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">device_report</span><span class="p">())</span>
+<p>Check what is installed (<code class="docutils literal notranslate"><span class="pre">device_report()</span></code>) and whether CUDA really works (<code class="docutils literal notranslate"><span class="pre">check_gpu()</span></code>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">brainmaze_eeg_models</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">bm</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bm</span><span class="o">.</span><span class="n">device_report</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bm</span><span class="o">.</span><span class="n">check_gpu</span><span class="p">())</span>     <span class="c1"># raises RuntimeError with the reason if CUDA is unusable</span>
 </pre></div>
 </div>
 <p>Every model takes <code class="docutils literal notranslate"><span class="pre">device='auto'</span> <span class="pre">|</span> <span class="pre">'cpu'</span> <span class="pre">|</span> <span class="pre">'cuda'</span></code>. <code class="docutils literal notranslate"><span class="pre">'cuda'</span></code> never falls back to the CPU
