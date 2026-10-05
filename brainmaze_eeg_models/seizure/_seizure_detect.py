@@ -99,8 +99,9 @@ def _resolve_model(model, use_cuda, cuda_number, device):
       :class:`ValueError` (so ``device='auto'`` with an explicit ``use_cuda`` is a conflict);
     - neither: 'cpu' for a model name; a loaded model runs where it was loaded.
 
-    A loaded model keeps its device; explicitly asking for a different one raises instead of
-    silently running elsewhere.
+    ``cuda_number`` (None = 0) is the GPU for a model loaded by name. A loaded model keeps its
+    device and GPU; explicitly asking for a different device, or (for a model on the GPU) a
+    ``cuda_number`` other than its GPU, raises instead of silently running elsewhere.
     """
     if device is not None and device not in DEVICES:
         raise ValueError(f"device must be one of {DEVICES}, got {device!r}")
@@ -117,8 +118,12 @@ def _resolve_model(model, use_cuda, cuda_number, device):
                              "pass only one of them")
     if device is None and use_cuda is not None:
         device = 'cuda' if use_cuda else 'cpu'
+    if cuda_number is not None and (isinstance(cuda_number, (bool, np.bool_))
+                                    or not isinstance(cuda_number, (int, np.integer)) or cuda_number < 0):
+        raise ValueError(f"cuda_number must be None or an integer >= 0, got {cuda_number!r}")
     if isinstance(model, str):
-        return load_trained_model(model, device=device or 'cpu', cuda_device_id=cuda_number)
+        return load_trained_model(model, device=device or 'cpu',
+                                  cuda_device_id=0 if cuda_number is None else int(cuda_number))
     if not isinstance(model, OnnxModel):
         raise TypeError(
             "model must be 'modelA', 'modelB' or a model from load_trained_model(); PyTorch models "
@@ -127,6 +132,11 @@ def _resolve_model(model, use_cuda, cuda_number, device):
         raise ValueError(
             f"the loaded model runs on {model.device!r} but {device!r} was requested; load it with "
             f"load_trained_model(..., device={device!r})")
+    if cuda_number is not None and model.device == 'cuda' and int(cuda_number) != model.cuda_device_id:
+        raise ValueError(
+            f"the loaded model runs on GPU {model.cuda_device_id} but cuda_number={int(cuda_number)} was "
+            f"requested; load it with load_trained_model(..., cuda_device_id={int(cuda_number)}) or omit "
+            "cuda_number")
     return model
 
 
@@ -239,7 +249,7 @@ def preprocess_input(x, fs, return_axes=False):
     return sxx
 
 
-def infer_seizure_probability(x, model='modelA', use_cuda=None, cuda_number=0, *, device=None):
+def infer_seizure_probability(x, model='modelA', use_cuda=None, cuda_number=None, *, device=None):
     """Run the seizure model on a batch of preprocessed spectrograms.
 
     Parameters
@@ -256,7 +266,8 @@ def infer_seizure_probability(x, model='modelA', use_cuda=None, cuda_number=0, *
         ``False``: run on the CPU. Default None: ``device``, else the CPU (as in
         brainmaze-torch 0.2.0; a loaded model runs where it was loaded).
     cuda_number : int, optional
-        CUDA device index. Default 0.
+        CUDA device index for a model loaded by name. Default None (= GPU 0; a loaded model
+        runs on its own GPU, and a different ``cuda_number`` raises :class:`ValueError`).
     device : {'auto', 'cpu', 'cuda'}, optional
         Alternative to ``use_cuda`` (keyword only); ``'auto'`` opts in to the GPU when it
         is usable. Giving both ``device`` and ``use_cuda`` is allowed only when they agree.
@@ -297,7 +308,7 @@ def infer_seizure_probability(x, model='modelA', use_cuda=None, cuda_number=0, *
 
 
 def predict_channel_seizure_probability(
-        x, fs, model='modelA', use_cuda=None, cuda_number=0, n_batch=128,
+        x, fs, model='modelA', use_cuda=None, cuda_number=None, n_batch=128,
         window_s=300, step_s=20, discard_edges_s=10,
         min_valid_fraction=0.0, fill_recording_edges=True, *, device=None,
 ):
@@ -332,7 +343,8 @@ def predict_channel_seizure_probability(
         Default None: ``device``, else the CPU (as in brainmaze-torch 0.2.0; a loaded
         model runs where it was loaded).
     cuda_number : int, optional
-        CUDA device index. Default 0.
+        CUDA device index for a model loaded by name. Default None (= GPU 0; a loaded model
+        runs on its own GPU, and a different ``cuda_number`` raises :class:`ValueError`).
     n_batch : int, optional
         Windows per inference batch (memory/speed trade-off only; does not
         change the result). Default 128.

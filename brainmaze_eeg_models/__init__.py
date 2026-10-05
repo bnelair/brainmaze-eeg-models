@@ -9,4 +9,6 @@ try:
 except PackageNotFoundError:  # running from a source tree that is not installed
     __version__ = "0.0.0"
 
-__all__ = ['__version__']
+from .runtime import check_gpu, device_report
+
+__all__ = ['__version__', 'check_gpu', 'device_report']

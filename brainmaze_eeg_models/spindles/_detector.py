@@ -1,13 +1,14 @@
 """Sleep-spindle detection with OpenSpindleNet on long, multichannel, gapped recordings."""
 from __future__ import annotations
 
+import functools
 import os
 import warnings
 from dataclasses import dataclass, field
 from fractions import Fraction
 
 import numpy as np
-from scipy.signal import resample_poly
+from scipy.signal import firwin, resample_poly
 
 from brainmaze_utils.gaps import fill_gaps, gap_intervals, mask_in_gaps
 
@@ -15,7 +16,7 @@ from ..runtime import OnnxModel
 from ._cwt import scalogram
 from ._decode import SEGMENTS, decode_window, interval_nms, sigmoid
 
-__all__ = ['SpindleDetector', 'SpindleDetections', 'MODELS', 'FS', 'WINDOW', 'DEMEAN_AUTO']
+__all__ = ['SpindleDetector', 'SpindleDetections', 'MODELS', 'FS', 'WINDOW', 'DEMEAN_AUTO', 'FS_WARN']
 
 FS = 250.0            # model sampling rate (Hz)
 WINDOW = 7500         # model input length (samples) = 30 s at 250 Hz
@@ -31,6 +32,7 @@ MODELS = {
 _RESAMPLE_RTOL = 1e-4     # max relative error of an approximate rational resampling ratio
 _RESAMPLE_MAX = 10 ** 5   # max up/down factor of resample_poly (its FIR has ~20 * max taps)
 FS_MIN = 50.0             # lowest accepted sampling rate (DREAMS excerpt 3, in the eeg training set)
+FS_WARN = 200.0           # below this input rate detect() warns (missing band above ~fs/2 changes counts)
 #: demean='auto': per model, what matches its training data (see SpindleDetector, ``demean``).
 DEMEAN_AUTO = {'eeg': True, 'ieeg': False}
 _OFFSET_WARN_SD = 5.0     # warn (demean off) when a window's |mean| exceeds this many SDs
@@ -125,29 +127,86 @@ def _flat_runs(x: np.ndarray, fs: float, flat_s: float) -> np.ndarray:
     return np.column_stack([a[keep], stops[keep]]).astype(np.int64)
 
 
+def _farey_bounds(x: Fraction, max_den: int) -> tuple[Fraction, ...]:
+    """The closest fractions below and above ``x`` with denominator ``<= max_den``.
+
+    These are the two candidates that :meth:`fractions.Fraction.limit_denominator` considers
+    (same continued-fraction algorithm), returned both instead of the one closer to ``x``, so
+    the caller can choose by its own error measure. ``(x,)`` if ``x`` itself qualifies.
+    """
+    if x.denominator <= max_den:
+        return (x,)
+    p0, q0, p1, q1 = 0, 1, 1, 0
+    n, d = x.numerator, x.denominator
+    while True:
+        a = n // d
+        q2 = q0 + a * q1
+        if q2 > max_den:
+            break
+        p0, q0, p1, q1 = p1, q1, p0 + a * p1, q2
+        n, d = d, n - a * d
+    k = (max_den - q0) // q1
+    return Fraction(p0 + k * p1, q0 + k * q1), Fraction(p1, q1)
+
+
 def _resample_ratio(fs: float) -> tuple[int, int, float]:
     """``up, down, fs_out`` for :func:`scipy.signal.resample_poly` from ``fs`` to ~250 Hz.
 
     The exact ratio is used whenever it is small enough (``max(up, down) <= 1e5``; e.g.
     256 Hz -> 125/128, 2048 Hz -> 125/1024, 32556 Hz -> 125/16278), so ``fs_out == 250``.
-    Otherwise (e.g. a measured rate such as 499.907 Hz) the smallest-denominator ratio within
-    1e-4 (relative) of 250 Hz is used and ``fs_out`` is the resulting exact effective rate
-    (the time axis uses it, so there is no drift). Raises :class:`ValueError` if no usable
-    ratio exists (absurdly high ``fs``).
+    Otherwise (e.g. a measured rate such as 499.907 Hz, or 256.0000001 Hz) the **closest**
+    ratio ``up / down`` to ``250 / fs`` with ``max(up, down) <= 1e5`` is used (499.907 Hz ->
+    45699/91381, relative error 3e-10; 256.0000001 Hz -> 125/128, 4e-10), and ``fs_out`` is
+    the resulting exact effective rate (the time axis uses it, so there is no drift). It must
+    lie within 1e-4 (relative) of 250 Hz. A large approximate ratio costs time, not accuracy: its
+    anti-aliasing FIR has ``20 * max(up, down) + 1`` taps (1.8 M for 499.907 Hz), and designing
+    it takes ~0.5-0.7 s, nearly independent of the signal length. The FIR is designed once per
+    ratio and cached (:func:`_resample_fir`), so only the first :meth:`SpindleDetector.detect`
+    call at such a rate pays it. Measured per channel (Xeon E5-1650 v2, scipy 1.10 and 1.18),
+    filtering with the cached FIR at 499.907 Hz takes ~0.06 s per 30 s call, ~0.1 s per 10 min
+    and ~0.25 s per hour (exact 500 Hz: ~0.1 s per hour; the network: ~36 s per hour). Raises
+    :class:`ValueError` if no usable ratio exists (absurdly high ``fs``).
     """
     fr = Fraction(fs).limit_denominator(10 ** 6)
+    # Exact ratio (fast path; the closest-ratio search below finds the same ratio when one exists).
     if float(fr) == fs:                          # fs is (a float of) a small rational number
         exact = Fraction(FS) / fr
         if 1 <= max(exact.numerator, exact.denominator) <= _RESAMPLE_MAX:
             return exact.numerator, exact.denominator, FS
     target = Fraction(FS) / Fraction(fs)
-    for limit in (100, 1000, 10000, _RESAMPLE_MAX):
-        r = target.limit_denominator(limit)
-        if r.numerator >= 1 and r.numerator <= _RESAMPLE_MAX and abs(float(r) * fs - FS) / FS <= _RESAMPLE_RTOL:
+    # Closest fraction whose larger term is <= _RESAMPLE_MAX: the denominator is the larger term
+    # when downsampling (target < 1), the numerator when upsampling (bound the reciprocal's
+    # denominator, then invert). Inversion is monotonic, so the closest candidates below and
+    # above the target stay the closest ones; choose between them by the error of up / down
+    # itself (the target domain), not of its reciprocal (Copilot, PR #7: fs=125.00062500600006).
+    if target < 1:
+        cands = _farey_bounds(target, _RESAMPLE_MAX)
+    else:
+        cands = tuple(1 / c for c in _farey_bounds(1 / target, _RESAMPLE_MAX) if c.numerator >= 1)
+    cands = [c for c in cands if c.numerator >= 1 and max(c.numerator, c.denominator) <= _RESAMPLE_MAX]
+    if cands:
+        r = min(cands, key=lambda c: (abs(c - target), c.denominator))
+        if abs(float(r) * fs - FS) / FS <= _RESAMPLE_RTOL:
             return r.numerator, r.denominator, fs * r.numerator / r.denominator
     raise ValueError(f"cannot resample fs={fs} Hz to 250 Hz with a rational ratio of at most "
                      f"{_RESAMPLE_MAX}; downsample the recording first (e.g. to 250-2000 Hz, with "
                      "an anti-aliasing filter)")
+
+
+@functools.lru_cache(maxsize=4)
+def _resample_fir(up: int, down: int) -> np.ndarray:
+    """The anti-aliasing FIR that :func:`scipy.signal.resample_poly` designs for ``up / down``.
+
+    Same design as ``resample_poly``'s default (``window=('kaiser', 5.0)``, cut-off at the
+    lower Nyquist rate, ``20 * max(up, down) + 1`` taps; ``up, down`` coprime), so passing it
+    as ``window=`` gives bit-identical output. Cached because the design dominates the cost
+    for large approximate ratios (499.907 Hz -> 45699/91381: ~0.5 s and ~15 MB per design,
+    nearly independent of the signal length). Read-only (``resample_poly`` copies it).
+    """
+    m = max(up, down)
+    h = firwin(2 * 10 * m + 1, 1.0 / m, window=('kaiser', 5.0))
+    h.flags.writeable = False
+    return h
 
 
 def _normalize(a: np.ndarray) -> np.ndarray:
@@ -255,10 +314,10 @@ class SpindleDetector:
       (zero-filled dropouts, disconnected or saturated channels) are treated as gaps.
     - With the 'eeg' model each window is demeaned before the scalogram (``demean='auto'``).
     - Any length >= 30 s and any sampling rate >= 50 Hz is accepted (the original: exactly
-      7500 samples, assumed to be at 250 Hz). Rates below 250 Hz are upsampled; spindles
-      (11-16 Hz) are below the Nyquist rate, but the scalogram's top scales (up to 24 Hz)
-      lose energy near the original Nyquist rate. The 'eeg' model's training data included
-      50, 100 and 200 Hz DREAMS recordings upsampled to 250 Hz (by linear interpolation).
+      7500 samples, assumed to be at 250 Hz). Rates below 250 Hz are upsampled. The 'eeg'
+      model's training data included 50, 100 and 200 Hz DREAMS recordings upsampled to
+      250 Hz (by linear interpolation). See *Sampling rate and preprocessing* below: low
+      rates are accepted, but they do change the results.
 
     With ``flat_s=None, demean=False`` a 250 Hz input gives the same intervals as
     ``openspindlenet`` run window by window with ``step_s=30`` (pinned by golden tests on
@@ -266,6 +325,49 @@ class SpindleDetector:
     spindle-at-sample-0 case. The 'ieeg' model's defaults (``demean='auto'`` = off) give the
     same; the 'eeg' defaults differ only through demeaning (tested: same spindles, confidence
     differences < 0.01).
+
+    .. rubric:: Sampling rate and preprocessing
+
+    The network sees the z-scored raw signal as well as the scalogram, so its output depends
+    on the **whole band up to 125 Hz**, not only on the spindle band (11-16 Hz). Measured on
+    the same hour of a scalp night (Fz-Cz, demo night, 'eeg' model, defaults), presented at
+    different rates with an anti-aliased resampler (``resample_poly``):
+
+    ========================  ============  ========================================
+    input rate / processing   spindles      vs the 250 Hz run (IoU >= 0.3)
+    ========================  ============  ========================================
+    250 Hz and >= 256 Hz      231-232       identical, except 1 extra at 256 Hz
+    200 Hz                    234           recall 0.996, precision 0.983
+    128 Hz                    247 (+7 %)    recall 0.991, precision 0.927
+    100 Hz                    291 (+26 %)   recall 0.983, precision 0.780
+    50 Hz                     313 (+35 %)   recall 0.970, precision 0.716
+    250 Hz, 60 Hz notch only  273 (+18 %)
+    ========================  ============  ========================================
+
+    The 250 Hz signal low-pass filtered at 25 / 50 Hz gives 315 / 290 spindles, matching the
+    50 / 100 Hz runs at 99 %: the difference comes from the missing band above the lower
+    Nyquist rate (here line noise at 58-62 Hz is 2.9 % of the power, the spindle band
+    3.5 %), not from the resampler. The extra detections are mostly additional detections,
+    not shifted copies of the 250 Hz ones (recall vs 250 Hz stays >= 0.97); whether they are
+    spindles was not checked. The shared ones agree well (median edge difference 11-12 ms at
+    50-100 Hz).
+
+    Consequences:
+
+    - :meth:`detect` warns (:class:`RuntimeWarning`) when ``fs`` < 200 Hz (:data:`FS_WARN`).
+      It cannot see whether a higher-rate recording was low-pass or notch filtered before
+      (scalp EEG has little power above 40 Hz anyway, so a power test would not tell a
+      filtered recording from a clean one), so check your own pipeline.
+    - **Within a study, use the same sampling rate and the same preprocessing (notch,
+      low-pass, re-referencing) for every recording,** or compare densities only between
+      recordings processed alike. Absolute spindle densities from data below 200 Hz, or
+      after notch / low-pass filtering below ~60 Hz, are not directly comparable with those
+      from full-band data.
+    - Which rate or preprocessing agrees best with expert scoring was **not measured**: the
+      counts above are relative to the full-band 250 Hz run only, not to a ground truth. (It
+      is a plausible but untested hypothesis that the full band at >= 200 Hz is closest to
+      the training data; whether the training recordings were notch filtered is not
+      documented.)
 
     .. rubric:: Memory
 
@@ -384,7 +486,9 @@ class SpindleDetector:
             Signal (any units, e.g. uV); NaN/inf mark missing data. At least 30 s long.
             Channels are processed independently (time on the last axis).
         fs : float
-            Sampling rate (Hz), >= 50 (see the class notes for rates below 250 Hz).
+            Sampling rate (Hz), >= 50. Below 200 Hz a :class:`RuntimeWarning` is issued: the
+            results depend on the band above ~25-60 Hz (see *Sampling rate and
+            preprocessing* in the class notes).
 
         Returns
         -------
@@ -404,6 +508,13 @@ class SpindleDetector:
         if duration < WINDOW_S:
             raise ValueError(f"the recording is {duration:.2f} s long; at least {WINDOW_S:g} s are needed")
         up, down, fs_eff = _resample_ratio(fs)
+        if fs < FS_WARN:
+            warnings.warn(
+                f"SpindleDetector: fs={fs:g} Hz is below {FS_WARN:g} Hz. The spindle counts depend on the "
+                "band above the Nyquist rate (on one scalp hour: +7 % at 128 Hz, +26 % at 100 Hz, +35 % at "
+                "50 Hz vs >= 200 Hz). Use the same sampling rate and preprocessing for every recording of a "
+                "study (see 'Sampling rate and preprocessing' in the SpindleDetector documentation).",
+                RuntimeWarning, stacklevel=2)
         # Window grid at fs_eff, shared by all channels.
         m = max(WINDOW, int(np.ceil(n * up / down)))
         step = int(round(self.step_s * FS))
@@ -458,7 +569,7 @@ class SpindleDetector:
         if len(gaps):
             x = fill_gaps(x, fs)
         # 3. resample to ~250 Hz (polyphase FIR = anti-aliasing low-pass)
-        z = x if up == down else resample_poly(x, up, down, padtype='line')
+        z = x if up == down else resample_poly(x, up, down, padtype='line', window=_resample_fir(up, down))
         if z.size < m:                          # rounding at exactly 30 s
             z = np.concatenate([z, np.repeat(z[-1:], m - z.size)])
         z = z[:m]

@@ -25,6 +25,31 @@ brainmaze-torch is retired; its last release will re-export these functions with
      - -> :class:`~brainmaze_eeg_models.runtime.OnnxModel` (``device`` default ``'cpu'``, ``threads``,
        ``cuda_device_id``)
 
+**One 0.2.0 pattern now raises** (loudly, never silently): in brainmaze-torch 0.2.0,
+``load_trained_model(name)`` had no device argument, and the GPU was requested per call, which
+moved the torch model to ``cuda:<cuda_number>`` temporarily:
+
+.. code-block:: python
+
+   m = load_trained_model('modelA')                                   # 0.2.0: always a CPU model
+   predict_channel_seizure_probability(x, fs, m, use_cuda=True)       # 0.2.0: ran on cuda:0
+
+Here a loaded model is an ONNX Runtime session that cannot move between devices, so this raises
+``ValueError: the loaded model runs on 'cpu' but 'cuda' was requested``. Replacement: choose the
+device when loading, or pass the model name and let the call load it:
+
+.. code-block:: python
+
+   m = load_trained_model('modelA', device='cuda', cuda_device_id=0)  # GPU k: cuda_device_id=k
+   predict_channel_seizure_probability(x, fs, m)
+   # or
+   predict_channel_seizure_probability(x, fs, 'modelA', use_cuda=True, cuda_number=0)
+
+A model loaded on GPU ``k`` together with a different ``cuda_number`` also raises (0.2.0 moved
+the model to the requested GPU). ``cuda_number`` with a CPU model and no GPU request is ignored,
+as in 0.2.0. The brainmaze-torch 0.3.0 compatibility release (re-exporting these functions)
+should name this change in its ``DeprecationWarning`` and release notes.
+
 Validation
 ----------
 

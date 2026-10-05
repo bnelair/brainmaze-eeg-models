@@ -21,7 +21,8 @@ Differences from brainmaze-torch 0.2.0:
   fallback), or the keyword ``device='cuda'`` / ``'auto'`` (GPU if usable, else CPU). Giving
   both ``use_cuda`` and ``device`` is allowed only when they agree (``device='auto'`` with an
   explicit ``use_cuda`` raises). A model from :func:`load_trained_model` runs where it was
-  loaded. On the GPU, TF32 is disabled; GPU results are expected to match the CPU to float32
+  loaded (device and GPU); a contradicting ``use_cuda`` / ``device`` / ``cuda_number``
+  raises. ``cuda_number`` defaults to None (= GPU 0 for a model loaded by name). On the GPU, TF32 is disabled; GPU results are expected to match the CPU to float32
   rounding but have not been measured on a GPU yet.
 - Numbers: the ONNX models (exported from the 0.2.0 weights, ``tools/export_seizure_onnx.py``
   in the repository) give the same probabilities as PyTorch within float32 rounding: typically
