@@ -1,0 +1,839 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Sleep spindles (OpenSpindleNet) &#8212; BrainMaze: A Toolbox to Analyze Brain Electrophysiology, Behavior and Dynamics - EEG Models</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=4418a689" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'spindles';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="_static/brainmaze_173x173.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Runtime (ONNX Runtime, CPU / GPU)" href="runtime.html" />
+    <link rel="prev" title="BrainMaze - EEG Models" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/brainmaze_1757x1762.PNG" class="logo__image only-light" alt="BrainMaze: A Toolbox to Analyze Brain Electrophysiology, Behavior and Dynamics - EEG Models - Home"/>
+    <img src="_static/brainmaze_1757x1762.PNG" class="logo__image only-dark pst-js-only" alt="BrainMaze: A Toolbox to Analyze Brain Electrophysiology, Behavior and Dynamics - EEG Models - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="index.html">
+                    BrainMaze - EEG Models
+                </a>
+            </li>
+        </ul>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Sleep spindles (OpenSpindleNet)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="runtime.html">Runtime (ONNX Runtime, CPU / GPU)</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/bnelair/brainmaze-eeg-models" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/spindles.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Sleep spindles (OpenSpindleNet)</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector"><code class="docutils literal notranslate"><span class="pre">SpindleDetector</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.device"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.device</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.predict_windows"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.predict_windows()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.detect()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections"><code class="docutils literal notranslate"><span class="pre">SpindleDetections</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.confidence"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.confidence</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.not_evaluated</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.n_channels</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.duration_s"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.duration_s</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.model"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.model</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_array"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_array()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel_intervals"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel_intervals()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.evaluated_fraction()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_dataframe"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_dataframe()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.scalogram"><code class="docutils literal notranslate"><span class="pre">scalogram()</span></code></a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-brainmaze_eeg_models.spindles">
+<span id="sleep-spindles-openspindlenet"></span><h1>Sleep spindles (OpenSpindleNet)<a class="headerlink" href="#module-brainmaze_eeg_models.spindles" title="Link to this heading">#</a></h1>
+<p>Sleep-spindle detection with OpenSpindleNet (scalp EEG and intracranial EEG models).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">brainmaze_eeg_models.spindles</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpindleDetector</span>
+
+<span class="n">det</span> <span class="o">=</span> <span class="n">SpindleDetector</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">'eeg'</span><span class="p">)</span>            <span class="c1"># 'ieeg' for intracranial EEG</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>                       <span class="c1"># x: (n_samples,) or (n_channels, n_samples)</span>
+<span class="n">res</span><span class="o">.</span><span class="n">channel_intervals</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>                      <span class="c1"># [start_s, end_s, confidence] per spindle</span>
+<span class="n">res</span><span class="o">.</span><span class="n">not_evaluated</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                          <span class="c1"># [start_s, stop_s) with no detection possible</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetector" title="brainmaze_eeg_models.spindles.SpindleDetector"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpindleDetector</span></code></a> for the pipeline (gaps, resampling to 250 Hz, sliding windows)
+and the differences from the <code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> package. The models and the decoding are
+ported from OpenSpindleNet (<a class="github reference external" href="https://github.com/CaptainTrojan/openspindlenet">CaptainTrojan/openspindlenet</a>, MIT License,
+Copyright (c) 2025 CaptainTrojan; full notice in NOTICE.md). Please cite
+Seják et al., Computers in Biology and Medicine 197 (2025) 110854.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetector">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">brainmaze_eeg_models.spindles.</span></span><span class="sig-name descname"><span class="pre">SpindleDetector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eeg'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nms_iou_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_valid_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_margin_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flat_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">demean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetector" title="Link to this definition">#</a></dt>
+<dd><p>Sleep-spindle detector (OpenSpindleNet) for long, multichannel recordings with gaps.</p>
+<p>The models were trained on 30 s windows at 250 Hz (Seják et al. 2025, see <em>Credits</em>).
+<a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect" title="brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">detect()</span></code></a> takes a whole recording at any sampling rate and</p>
+<ol class="arabic simple">
+<li><p>treats NaN/inf samples, and runs of identical values lasting &gt;= <code class="docutils literal notranslate"><span class="pre">flat_s</span></code> (a
+disconnected, clipped or zero-padded channel), as gaps;</p></li>
+<li><p>fills the gaps (<code class="xref py py-func docutils literal notranslate"><span class="pre">brainmaze_utils.gaps.fill_gaps()</span></code>, spectral noise) so that the
+filters and the network see a plausible background;</p></li>
+<li><p>resamples to 250 Hz with <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.signal.resample_poly()</span></code> (its polyphase FIR is the
+anti-aliasing low-pass; cut-off at the lower Nyquist rate, 125 Hz when downsampling;
+exact ratio where one exists, e.g. 256 Hz -&gt; 125/128). The training data were
+resampled with <code class="docutils literal notranslate"><span class="pre">np.interp</span></code> (linear interpolation, no anti-aliasing); the better filter
+does not change the results measurably: on a 6.8 h 500 Hz night 854 vs 861 spindles
+with 93-94 % mutual agreement (the same order as step 20 s vs 30 s), on DREAMS F1 0.570
+vs 0.572;</p></li>
+<li><p>cuts sliding 30 s windows every <code class="docutils literal notranslate"><span class="pre">step_s</span></code> seconds (the last one aligned to the end),
+computes the model inputs exactly as OpenSpindleNet (z-scored signal + z-scored
+‘shan6-13’ scalogram, see <a class="reference internal" href="#brainmaze_eeg_models.spindles.scalogram" title="brainmaze_eeg_models.spindles.scalogram"><code class="xref py py-func docutils literal notranslate"><span class="pre">brainmaze_eeg_models.spindles.scalogram()</span></code></a>) and runs
+the network in batches;</p></li>
+<li><p>decodes each window as OpenSpindleNet does (confidence threshold, per-window NMS);
+each window keeps only the spindles whose centre lies in the part of the recording it
+<em>owns</em> (the middle of the window; window boundaries are half-way between window
+centres), so the network’s poorer view at window edges is not used; overlapping
+detections of neighbouring windows are then merged by NMS;</p></li>
+<li><p>drops every spindle that overlaps a gap widened by <code class="docutils literal notranslate"><span class="pre">gap_margin_s</span></code> and reports the
+unevaluated time per channel (<a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated" title="brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SpindleDetections.not_evaluated</span></code></a>).</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>{'eeg'</em><em>, </em><em>'ieeg'}</em>) – <code class="docutils literal notranslate"><span class="pre">'eeg'</span></code>: scalp EEG model; <code class="docutils literal notranslate"><span class="pre">'ieeg'</span></code>: intracranial EEG model.</p></li>
+<li><p><strong>device</strong> (<em>{'auto'</em><em>, </em><em>'cpu'</em><em>, </em><em>'cuda'}</em>) – See <a class="reference internal" href="runtime.html#brainmaze_eeg_models.runtime.OnnxModel" title="brainmaze_eeg_models.runtime.OnnxModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">brainmaze_eeg_models.runtime.OnnxModel</span></code></a>.</p></li>
+<li><p><strong>threads</strong> (<em>int</em><em>, </em><em>optional</em>) – CPU threads for the network and the FFTs (None: all cores).</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – Windows per inference call.</p></li>
+<li><p><strong>confidence_threshold</strong> (<em>float</em>) – Minimum confidence of a detection (OpenSpindleNet default 0.5).</p></li>
+<li><p><strong>nms_iou_threshold</strong> (<em>float</em>) – Overlapping detections with IoU &gt;= this are merged, keeping the most confident one
+(OpenSpindleNet default 0.3).</p></li>
+<li><p><strong>step_s</strong> (<em>float</em>) – Hop between windows, in (0, 30] s. Default 20 s: 10 s overlap, every window keeps the
+spindles centred in its middle ~20 s (&gt;= 5 s away from its edges, except at the
+recording edges). Smaller steps cost proportionally more time.</p></li>
+<li><p><strong>min_valid_fraction</strong> (<em>float</em>) – A window with less than this fraction of valid (non-gap) samples is not evaluated.</p></li>
+<li><p><strong>gap_margin_s</strong> (<em>float</em>) – Spindles overlapping a gap widened by this many seconds on each side are dropped.</p></li>
+<li><p><strong>flat_s</strong> (<em>float</em><em> or </em><em>None</em>) – Runs of identical consecutive values at least this long (s) are treated as gaps.
+<code class="docutils literal notranslate"><span class="pre">None</span></code> disables the check.</p></li>
+<li><p><strong>demean</strong> (<em>{'auto'</em><em>, </em><em>True</em><em>, </em><em>False}</em>) – <p>Subtract each window’s mean before the scalogram. The scalogram kernels (up to 43 s)
+are longer than the window, so a DC offset leaks into every scalogram sample (the
+z-scored raw-signal input is not affected). <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> (default) does what matches
+each model’s training data: <strong>on for ‘eeg’</strong>, <strong>off for ‘ieeg’</strong>
+(<code class="xref py py-data docutils literal notranslate"><span class="pre">DEMEAN_AUTO</span></code>). Measured effects:</p>
+<ul>
+<li><p>’eeg’ (scalp data have small offsets; DREAMS &lt;= 0.02 SD): demeaning changes nothing
+measurable (DREAMS F1 identical, the 6.8 h demo night gives the same 854 spindles)
+and protects against offsets, which without it change the confidences on the
+bundled eeg sample by up to 0.01 at 2 SD and 0.13 at 10 SD, and suppress most
+detections at 100 SD.</p></li>
+<li><p>’ieeg’: the training data were raw MEF signals (no filtering, no demeaning), so DC
+offsets were part of the training distribution, and this model is much more
+sensitive to them: on the bundled iEEG sample (offset -1.89 SD) an added offset of
+0.5 / 1 / 3 / 5 SD changes the confidences by up to 0.07 / 0.10 / 0.32 / 0.57, and
+demeaning that sample changes them by up to 0.055 (segmentation 0.25, interval
+edges by up to 9 samples). Nobody has validated either choice on labelled iEEG, so
+the default keeps the training behaviour.</p></li>
+</ul>
+<p><strong>Limitation:</strong> with demeaning off, the outputs depend on the recording’s DC offset
+(amplifier offset, slow drift, reference choice). <a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect" title="brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">detect()</span></code></a> records the largest
+<code class="docutils literal notranslate"><span class="pre">|window</span> <span class="pre">mean|</span> <span class="pre">/</span> <span class="pre">window</span> <span class="pre">SD</span></code> of the evaluated windows in
+<code class="docutils literal notranslate"><span class="pre">params['max_abs_offset_sd']</span></code> and warns when it exceeds 5 (the bundled iEEG sample,
+from the training domain, has 1.9; 3.1 after its zero-filled dropout is filled, so a
+few SD are in-distribution; how far the training data went is not known). For such data, high-pass filter beforehand (e.g.
+0.3-0.5 Hz) or decide explicitly with <code class="docutils literal notranslate"><span class="pre">demean=True</span></code>. <code class="docutils literal notranslate"><span class="pre">False</span></code> reproduces the
+original package exactly.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Differences from the <code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> package (0.1.1), all deliberate:</p>
+<ul class="simple">
+<li><p>The wavelet is sampled as in PyWavelets &lt;= 1.8 (<code class="docutils literal notranslate"><span class="pre">precision=10</span></code>), the version the
+models were trained with. <code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> with PyWavelets &gt;= 1.9 computes a
+different scalogram (different detections) without any warning.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> silently drops a spindle whose interval starts exactly at the first
+sample of the 30 s input; here it is kept.</p></li>
+<li><p>NaN input is not z-scored to zeros silently: gaps are filled, then the spindles in and
+next to them are dropped and the time is reported as not evaluated. Flat runs
+(zero-filled dropouts, disconnected or saturated channels) are treated as gaps.</p></li>
+<li><p>With the ‘eeg’ model each window is demeaned before the scalogram (<code class="docutils literal notranslate"><span class="pre">demean='auto'</span></code>).</p></li>
+<li><p>Any length &gt;= 30 s and any sampling rate &gt;= 50 Hz is accepted (the original: exactly
+7500 samples, assumed to be at 250 Hz). Rates below 250 Hz are upsampled; spindles
+(11-16 Hz) are below the Nyquist rate, but the scalogram’s top scales (up to 24 Hz)
+lose energy near the original Nyquist rate. The ‘eeg’ model’s training data included
+50, 100 and 200 Hz DREAMS recordings upsampled to 250 Hz (by linear interpolation).</p></li>
+</ul>
+<p>With <code class="docutils literal notranslate"><span class="pre">flat_s=None,</span> <span class="pre">demean=False</span></code> a 250 Hz input gives the same intervals as
+<code class="docutils literal notranslate"><span class="pre">openspindlenet</span></code> run window by window with <code class="docutils literal notranslate"><span class="pre">step_s=30</span></code> (pinned by golden tests on
+single windows and on a 6 min multi-window recording), apart from the
+spindle-at-sample-0 case. The ‘ieeg’ model’s defaults (<code class="docutils literal notranslate"><span class="pre">demean='auto'</span></code> = off) give the
+same; the ‘eeg’ defaults differ only through demeaning (tested: same spindles, confidence
+differences &lt; 0.01).</p>
+<p class="rubric">Memory</p>
+<p>Channels are processed one at a time, but each whole channel is held at its original rate
+in float64, in a few copies (the input cast, flat-run masking, gap filling and the
+resampler’s working arrays): about 8 bytes x samples per copy, e.g. 22 GB per copy for
+24 h at 32 kHz. For long high-rate recordings, downsample beforehand (with an
+anti-aliasing filter, to e.g. 250-1000 Hz) or call <a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect" title="brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">detect()</span></code></a> on segments (overlap
+them by &gt;= 30 s and keep each segment’s spindles away from its edges).</p>
+<p class="rubric">Credits</p>
+<p>Models and the decoding are from OpenSpindleNet (<a class="github reference external" href="https://github.com/CaptainTrojan/openspindlenet">CaptainTrojan/openspindlenet</a>,
+MIT License, Copyright (c) 2025 CaptainTrojan; full text in NOTICE.md). If you use the
+detector, please cite: M. Seják, F. Mivalt, V. Sladký, V. Všianský, D. Z. Carvalho,
+E. K. St Louis, G. A. Worrell, V. Křemen, “OpenSpindleNet: An open-source deep learning
+network for reliable sleep spindle detection in scalp and intracranial EEG”,
+Computers in Biology and Medicine 197 (2025) 110854.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetector.device">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">device</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetector.device" title="Link to this definition">#</a></dt>
+<dd><p>Device the network runs on (‘cpu’ or ‘cuda’).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetector.predict_windows">
+<span class="sig-name descname"><span class="pre">predict_windows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">windows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetector.predict_windows" title="Link to this definition">#</a></dt>
+<dd><p>Run the network on 30 s windows at 250 Hz, preprocessed as OpenSpindleNet does.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>windows</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>n_windows</em><em>, </em><em>7500</em><em>) or </em><em>(</em><em>7500</em><em>,</em><em>)</em>) – Finite signal windows sampled at 250 Hz (any units; each window is z-scored, and
+demeaned before the scalogram if <code class="docutils literal notranslate"><span class="pre">demean</span></code>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">'detection'</span></code>: <code class="docutils literal notranslate"><span class="pre">(n_windows,</span> <span class="pre">30,</span> <span class="pre">3)</span></code> sigmoid outputs (confidence, centre offset,
+duration / 2 s) per 1 s segment; <code class="docutils literal notranslate"><span class="pre">'segmentation'</span></code>: <code class="docutils literal notranslate"><span class="pre">(n_windows,</span> <span class="pre">7500)</span></code>
+per-sample spindle probability.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetector.detect">
+<span class="sig-name descname"><span class="pre">detect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetections" title="brainmaze_eeg_models.spindles._detector.SpindleDetections"><span class="pre">SpindleDetections</span></a></span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect" title="Link to this definition">#</a></dt>
+<dd><p>Detect spindles in a recording.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>) or </em><em>(</em><a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels" title="brainmaze_eeg_models.spindles.SpindleDetections.n_channels"><em>n_channels</em></a><em>, </em><em>n_samples</em><em>)</em>) – Signal (any units, e.g. uV); NaN/inf mark missing data. At least 30 s long.
+Channels are processed independently (time on the last axis).</p></li>
+<li><p><strong>fs</strong> (<em>float</em>) – Sampling rate (Hz), &gt;= 50 (see the class notes for rates below 250 Hz).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#brainmaze_eeg_models.spindles.SpindleDetections" title="brainmaze_eeg_models.spindles.SpindleDetections">SpindleDetections</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">brainmaze_eeg_models.spindles.</span></span><span class="sig-name descname"><span class="pre">SpindleDetections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_evaluated</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections" title="Link to this definition">#</a></dt>
+<dd><p>Spindles found in a recording, one row per spindle, times in seconds from the first sample.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">start,</span> <span class="pre">end</span></span></dt>
+<dd><p>Interval of each spindle (s). Sorted by channel, then start.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray, float64</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.confidence" title="Link to this definition">#</a></dt>
+<dd><p>Detection confidence in [0, 1] (the model’s sigmoid output).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray, float64</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.channel">
+<span class="sig-name descname"><span class="pre">channel</span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel" title="Link to this definition">#</a></dt>
+<dd><p>Channel index (row of the input; 0 for 1-D input).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray, int64</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated">
+<span class="sig-name descname"><span class="pre">not_evaluated</span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated" title="Link to this definition">#</a></dt>
+<dd><p>Per channel, <code class="docutils literal notranslate"><span class="pre">(k,</span> <span class="pre">2)</span></code> <code class="docutils literal notranslate"><span class="pre">[start,</span> <span class="pre">stop)</span></code> intervals (s) where <strong>no detection is
+possible</strong>: NaN/inf gaps and flat segments widened by <code class="docutils literal notranslate"><span class="pre">gap_margin_s</span></code>, plus the time
+owned by windows that were skipped (too little valid data, or flat). An empty result
+there means “not evaluated”, never “no spindles”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.n_channels">
+<span class="sig-name descname"><span class="pre">n_channels</span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.duration_s">
+<span class="sig-name descname"><span class="pre">duration_s</span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.duration_s" title="Link to this definition">#</a></dt>
+<dd><p>Recording duration <code class="docutils literal notranslate"><span class="pre">n_samples</span> <span class="pre">/</span> <span class="pre">fs</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.model" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.to_array">
+<span class="sig-name descname"><span class="pre">to_array</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_array" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">4)</span></code> float64 array <code class="docutils literal notranslate"><span class="pre">[start,</span> <span class="pre">end,</span> <span class="pre">confidence,</span> <span class="pre">channel]</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.channel_intervals">
+<span class="sig-name descname"><span class="pre">channel_intervals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel_intervals" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code> <code class="docutils literal notranslate"><span class="pre">[start,</span> <span class="pre">end,</span> <span class="pre">confidence]</span></code> of one channel, sorted by start.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction">
+<span class="sig-name descname"><span class="pre">evaluated_fraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction" title="Link to this definition">#</a></dt>
+<dd><p>Fraction of the recording of <code class="docutils literal notranslate"><span class="pre">channel</span></code> that was evaluated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.SpindleDetections.to_dataframe">
+<span class="sig-name descname"><span class="pre">to_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_dataframe" title="Link to this definition">#</a></dt>
+<dd><p>pandas DataFrame with columns start, end, duration, confidence, channel.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="brainmaze_eeg_models.spindles.scalogram">
+<span class="sig-prename descclassname"><span class="pre">brainmaze_eeg_models.spindles.</span></span><span class="sig-name descname"><span class="pre">scalogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([135.,</span> <span class="pre">141.85214622,</span> <span class="pre">149.05208435,</span> <span class="pre">156.61746713,</span> <span class="pre">164.56684332,</span> <span class="pre">172.91970312,</span> <span class="pre">181.69652601,</span> <span class="pre">190.91883092,</span> <span class="pre">200.60922903,</span> <span class="pre">210.79147918,</span> <span class="pre">221.49054612,</span> <span class="pre">232.73266174,</span> <span class="pre">244.54538935,</span> <span class="pre">256.95769131,</span> <span class="pre">270.])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#brainmaze_eeg_models.spindles.scalogram" title="Link to this definition">#</a></dt>
+<dd><p>Magnitude of the ‘shan6-13’ CWT of each window, as OpenSpindleNet computes it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>)</em>) – Real windows (time on the last axis), finite. Each window is transformed
+independently with zero padding at its edges (as <code class="docutils literal notranslate"><span class="pre">pywt.cwt</span></code> does).</p></li>
+<li><p><strong>scales</strong> (<em>array_like</em>) – Scales in samples (default: OpenSpindleNet’s 15 scales, 135-270).</p></li>
+<li><p><strong>precision</strong> (<em>int</em>) – Wavelet sampling, 2**precision points (default 10 = what the models were trained on).</p></li>
+<li><p><strong>workers</strong> (<em>int</em><em>, </em><em>optional</em>) – Threads for <code class="xref py py-mod docutils literal notranslate"><span class="pre">scipy.fft</span></code> (default: scipy’s default, 1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">|coef|</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray, shape (…, n_scales, n), float64</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">BrainMaze - EEG Models</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="runtime.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Runtime (ONNX Runtime, CPU / GPU)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector"><code class="docutils literal notranslate"><span class="pre">SpindleDetector</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.device"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.device</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.predict_windows"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.predict_windows()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetector.detect"><code class="docutils literal notranslate"><span class="pre">SpindleDetector.detect()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections"><code class="docutils literal notranslate"><span class="pre">SpindleDetections</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.confidence"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.confidence</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.not_evaluated"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.not_evaluated</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.n_channels"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.n_channels</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.duration_s"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.duration_s</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.model"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.model</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_array"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_array()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.channel_intervals"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.channel_intervals()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.evaluated_fraction"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.evaluated_fraction()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.SpindleDetections.to_dataframe"><code class="docutils literal notranslate"><span class="pre">SpindleDetections.to_dataframe()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze_eeg_models.spindles.scalogram"><code class="docutils literal notranslate"><span class="pre">scalogram()</span></code></a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Filip Mivalt M.Sc., Ph.D.
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2020-present, Mayo Clinic Department of Neurology - Laboratory of Bioelectronics Neurophysiology and Engineering. All rights reserved.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
