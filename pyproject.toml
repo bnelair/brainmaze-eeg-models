@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "brainmaze-eeg-models"
 # 0.0.0 = unreleased placeholder. The version is owned by the release flow on main (Prepare
 # release opens the bump PR; the first release is 0.1.0). Never edit it in a normal PR.
-version = "0.0.0"
+version = "0.1.0"
 description = "BrainMaze: ready-to-use trained EEG/iEEG models (seizure probability, sleep spindles) on ONNX Runtime"
 authors = [
     { name = "Filip Mivalt", email = "mivalt.filip@mayo.edu" }
