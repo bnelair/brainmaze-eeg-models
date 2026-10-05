@@ -83,7 +83,6 @@ import importlib.metadata as _md
 import io
 import logging
 import os
-import tempfile
 import threading
 import warnings
 from typing import Mapping, Sequence
@@ -258,19 +257,16 @@ def check_gpu(device_id: int = 0) -> str:
     RuntimeError
         If CUDA cannot be used, with the reason and what to install (as ``device='cuda'``).
     """
-    with tempfile.TemporaryDirectory() as d:
-        path = os.path.join(d, 'check_gpu.onnx')
-        with open(path, 'wb') as fh:
-            fh.write(_TINY_ONNX)
-        m = OnnxModel(path, device='cuda', cuda_device_id=device_id, name='check_gpu')
-        a = np.arange(6, dtype=np.float32).reshape(2, 3)
-        b = np.ones((2, 4), dtype=np.float32)
-        try:
-            out = m.run({'a': a, 'b': b})
-        except Exception as exc:  # noqa: BLE001
-            raise RuntimeError(_cuda_help(f"the CUDA session was created but inference failed: {exc}")) from exc
-        providers = m.providers
-        del m                          # release the session before the file is removed
+    # The model is loaded from memory: no temporary file (a full or read-only TMPDIR would raise
+    # OSError instead of the documented RuntimeError; PR #7 R3).
+    m = OnnxModel(_TINY_ONNX, device='cuda', cuda_device_id=device_id, name='check_gpu')
+    a = np.arange(6, dtype=np.float32).reshape(2, 3)
+    b = np.ones((2, 4), dtype=np.float32)
+    try:
+        out = m.run({'a': a, 'b': b})
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(_cuda_help(f"the CUDA session was created but inference failed: {exc}")) from exc
+    providers = m.providers
     if not (np.array_equal(out['y'], 2 * a + 1) and np.array_equal(out['s'], np.full(2, 4, np.float32))):
         raise RuntimeError(f"CUDA inference returned wrong values on GPU {device_id}: {out}")
     return (f"CUDA works: GPU {device_id}, session providers {providers}, "
@@ -282,8 +278,10 @@ class OnnxModel:
 
     Parameters
     ----------
-    path : str
-        Path to the ``.onnx`` file.
+    path : str, os.PathLike or bytes
+        Path to the ``.onnx`` file, or the serialized model itself as ``bytes`` (as
+        ``onnxruntime.InferenceSession`` accepts; then ``name`` is required, ``sha256`` is
+        checked on the bytes and :attr:`path` is ``None``).
     device : {'auto', 'cpu', 'cuda'}
         ``'auto'``: CUDA when the CUDA execution provider is installed and initialises, else
         CPU. A :class:`RuntimeWarning` is issued when the CPU is used although a GPU setup
@@ -313,7 +311,7 @@ class OnnxModel:
         Name used in messages.
     """
 
-    def __init__(self, path: str, *, device: str = 'auto', threads: int | None = None,
+    def __init__(self, path: str | os.PathLike | bytes, *, device: str = 'auto', threads: int | None = None,
                  batch_size: int = 32, cuda_device_id: int = 0, cuda_tf32: bool = False,
                  output_batch_axes: Mapping[str, int] | None = None,
                  sha256: str | None = None, name: str | None = None):
@@ -323,15 +321,25 @@ class OnnxModel:
                                     or threads < 1):
             raise ValueError(f"threads must be None or an integer >= 1, got {threads!r}")
         self.batch_size = self._check_batch_size(batch_size)
-        self.path = os.fspath(path)
-        self.name = name or os.path.basename(self.path)
-        if not os.path.isfile(self.path):
-            raise FileNotFoundError(f"Model file not found: {self.path}")
+        if isinstance(path, (bytes, bytearray, memoryview)):
+            if not name:
+                raise ValueError("name is required when the model is given as bytes")
+            self._source = bytes(path)
+            self.path = None
+            self.name = name
+            where = f"Model {name} (given as bytes)"
+        else:
+            self.path = self._source = os.fspath(path)
+            self.name = name or os.path.basename(self.path)
+            if not os.path.isfile(self.path):
+                raise FileNotFoundError(f"Model file not found: {self.path}")
+            where = f"Model file {self.path}"
         if sha256 is not None:
-            digest = _sha256(self.path)
+            digest = (hashlib.sha256(self._source).hexdigest() if self.path is None
+                      else _sha256(self.path))
             if digest != sha256.lower():
                 raise RuntimeError(
-                    f"Model file {self.path} is corrupted or not the expected model "
+                    f"{where} is corrupted or not the expected model "
                     f"(SHA-256 {digest}, expected {sha256}). Reinstall the package.")
         self.threads = None if threads is None else int(threads)
         if not isinstance(cuda_tf32, (bool, np.bool_)):
@@ -404,7 +412,7 @@ class OnnxModel:
         return so
 
     def _make_session(self, providers: Sequence):
-        return _ort().InferenceSession(self.path, sess_options=self._options(), providers=list(providers))
+        return _ort().InferenceSession(self._source, sess_options=self._options(), providers=list(providers))
 
     def _make_cuda_session(self, *, strict: bool):
         _preload_cuda_libraries()

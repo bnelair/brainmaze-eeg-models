@@ -27,7 +27,7 @@ not only on the spindle band (11-16 Hz): the network sees the whole z-scored sig
 same hour of a scalp night (demo night, 'eeg' model, defaults; the 250 Hz signal presented at
 other rates with an anti-aliased resampler):
 
-- >= 256 Hz: 231-232 spindles, identical to 250 Hz (512-4096 Hz) or 1 extra (256 Hz);
+- 250 Hz: 231 spindles; 512-4096 Hz: the same 231; 256 Hz: 232 (1 extra);
 - 200 Hz: 234 (recall 0.996, precision 0.983 vs 250 Hz);
 - 128 Hz: 247 (+7 %); 100 Hz: 291 (+26 %); 50 Hz: 313 (+35 %);
 - 250 Hz after a 60 Hz notch filter alone: 273 (+18 %).
@@ -38,7 +38,13 @@ Low-pass filtering the 250 Hz signal at 25 / 50 Hz gives 315 / 290 spindles, mat
 :meth:`~brainmaze_eeg_models.spindles.SpindleDetector.detect` warns when ``fs`` < 200 Hz; it
 cannot tell whether a higher-rate recording was notch or low-pass filtered before. **Use the
 same sampling rate and the same preprocessing for every recording of a study** (or compare
-only recordings processed alike), and prefer native rates >= 200 Hz without a notch filter.
+only recordings processed alike).
+
+These measurements show only that the counts differ. Which rate or preprocessing agrees best
+with expert scoring was **not measured** (the counts are relative to the full-band 250 Hz run,
+not to a ground truth); that the full band at >= 200 Hz is closest to the training data is a
+plausible but untested hypothesis (whether the training recordings were notch filtered is not
+documented).
 
 Validation against the original package
 ---------------------------------------

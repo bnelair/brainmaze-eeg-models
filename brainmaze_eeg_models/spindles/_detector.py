@@ -1,13 +1,14 @@
 """Sleep-spindle detection with OpenSpindleNet on long, multichannel, gapped recordings."""
 from __future__ import annotations
 
+import functools
 import os
 import warnings
 from dataclasses import dataclass, field
 from fractions import Fraction
 
 import numpy as np
-from scipy.signal import resample_poly
+from scipy.signal import firwin, resample_poly
 
 from brainmaze_utils.gaps import fill_gaps, gap_intervals, mask_in_gaps
 
@@ -126,18 +127,45 @@ def _flat_runs(x: np.ndarray, fs: float, flat_s: float) -> np.ndarray:
     return np.column_stack([a[keep], stops[keep]]).astype(np.int64)
 
 
+def _farey_bounds(x: Fraction, max_den: int) -> tuple[Fraction, ...]:
+    """The closest fractions below and above ``x`` with denominator ``<= max_den``.
+
+    These are the two candidates that :meth:`fractions.Fraction.limit_denominator` considers
+    (same continued-fraction algorithm), returned both instead of the one closer to ``x``, so
+    the caller can choose by its own error measure. ``(x,)`` if ``x`` itself qualifies.
+    """
+    if x.denominator <= max_den:
+        return (x,)
+    p0, q0, p1, q1 = 0, 1, 1, 0
+    n, d = x.numerator, x.denominator
+    while True:
+        a = n // d
+        q2 = q0 + a * q1
+        if q2 > max_den:
+            break
+        p0, q0, p1, q1 = p1, q1, p0 + a * p1, q2
+        n, d = d, n - a * d
+    k = (max_den - q0) // q1
+    return Fraction(p0 + k * p1, q0 + k * q1), Fraction(p1, q1)
+
+
 def _resample_ratio(fs: float) -> tuple[int, int, float]:
     """``up, down, fs_out`` for :func:`scipy.signal.resample_poly` from ``fs`` to ~250 Hz.
 
     The exact ratio is used whenever it is small enough (``max(up, down) <= 1e5``; e.g.
     256 Hz -> 125/128, 2048 Hz -> 125/1024, 32556 Hz -> 125/16278), so ``fs_out == 250``.
     Otherwise (e.g. a measured rate such as 499.907 Hz, or 256.0000001 Hz) the **closest**
-    ratio with ``max(up, down) <= 1e5`` is used (499.907 Hz -> 45699/91381, relative error
-    3e-10; 256.0000001 Hz -> 125/128, 4e-10), and ``fs_out`` is the resulting exact effective
-    rate (the time axis uses it, so there is no drift). It must lie within 1e-4 (relative) of
-    250 Hz. A large approximate ratio costs more resampling time (499.907 Hz: ~5 s per hour of
-    signal on one core, vs ~36 s for the network) but no accuracy. Raises :class:`ValueError`
-    if no usable ratio exists (absurdly high ``fs``).
+    ratio ``up / down`` to ``250 / fs`` with ``max(up, down) <= 1e5`` is used (499.907 Hz ->
+    45699/91381, relative error 3e-10; 256.0000001 Hz -> 125/128, 4e-10), and ``fs_out`` is
+    the resulting exact effective rate (the time axis uses it, so there is no drift). It must
+    lie within 1e-4 (relative) of 250 Hz. A large approximate ratio costs time, not accuracy: its
+    anti-aliasing FIR has ``20 * max(up, down) + 1`` taps (1.8 M for 499.907 Hz), and designing
+    it takes ~0.5-0.7 s, nearly independent of the signal length. The FIR is designed once per
+    ratio and cached (:func:`_resample_fir`), so only the first :meth:`SpindleDetector.detect`
+    call at such a rate pays it. Measured per channel (Xeon E5-1650 v2, scipy 1.10 and 1.18),
+    filtering with the cached FIR at 499.907 Hz takes ~0.06 s per 30 s call, ~0.1 s per 10 min
+    and ~0.25 s per hour (exact 500 Hz: ~0.1 s per hour; the network: ~36 s per hour). Raises
+    :class:`ValueError` if no usable ratio exists (absurdly high ``fs``).
     """
     fr = Fraction(fs).limit_denominator(10 ** 6)
     # Exact ratio (fast path; the closest-ratio search below finds the same ratio when one exists).
@@ -146,15 +174,39 @@ def _resample_ratio(fs: float) -> tuple[int, int, float]:
         if 1 <= max(exact.numerator, exact.denominator) <= _RESAMPLE_MAX:
             return exact.numerator, exact.denominator, FS
     target = Fraction(FS) / Fraction(fs)
-    # Closest fraction whose larger term is <= _RESAMPLE_MAX: bound the denominator when
-    # downsampling (target < 1), the numerator (via the reciprocal) when upsampling.
-    r = target.limit_denominator(_RESAMPLE_MAX) if target < 1 else 1 / (1 / target).limit_denominator(_RESAMPLE_MAX)
-    if r.numerator >= 1 and max(r.numerator, r.denominator) <= _RESAMPLE_MAX \
-            and abs(float(r) * fs - FS) / FS <= _RESAMPLE_RTOL:
-        return r.numerator, r.denominator, fs * r.numerator / r.denominator
+    # Closest fraction whose larger term is <= _RESAMPLE_MAX: the denominator is the larger term
+    # when downsampling (target < 1), the numerator when upsampling (bound the reciprocal's
+    # denominator, then invert). Inversion is monotonic, so the closest candidates below and
+    # above the target stay the closest ones; choose between them by the error of up / down
+    # itself (the target domain), not of its reciprocal (Copilot, PR #7: fs=125.00062500600006).
+    if target < 1:
+        cands = _farey_bounds(target, _RESAMPLE_MAX)
+    else:
+        cands = tuple(1 / c for c in _farey_bounds(1 / target, _RESAMPLE_MAX) if c.numerator >= 1)
+    cands = [c for c in cands if c.numerator >= 1 and max(c.numerator, c.denominator) <= _RESAMPLE_MAX]
+    if cands:
+        r = min(cands, key=lambda c: (abs(c - target), c.denominator))
+        if abs(float(r) * fs - FS) / FS <= _RESAMPLE_RTOL:
+            return r.numerator, r.denominator, fs * r.numerator / r.denominator
     raise ValueError(f"cannot resample fs={fs} Hz to 250 Hz with a rational ratio of at most "
                      f"{_RESAMPLE_MAX}; downsample the recording first (e.g. to 250-2000 Hz, with "
                      "an anti-aliasing filter)")
+
+
+@functools.lru_cache(maxsize=4)
+def _resample_fir(up: int, down: int) -> np.ndarray:
+    """The anti-aliasing FIR that :func:`scipy.signal.resample_poly` designs for ``up / down``.
+
+    Same design as ``resample_poly``'s default (``window=('kaiser', 5.0)``, cut-off at the
+    lower Nyquist rate, ``20 * max(up, down) + 1`` taps; ``up, down`` coprime), so passing it
+    as ``window=`` gives bit-identical output. Cached because the design dominates the cost
+    for large approximate ratios (499.907 Hz -> 45699/91381: ~0.5 s and ~15 MB per design,
+    nearly independent of the signal length). Read-only (``resample_poly`` copies it).
+    """
+    m = max(up, down)
+    h = firwin(2 * 10 * m + 1, 1.0 / m, window=('kaiser', 5.0))
+    h.flags.writeable = False
+    return h
 
 
 def _normalize(a: np.ndarray) -> np.ndarray:
@@ -295,8 +347,10 @@ class SpindleDetector:
     The 250 Hz signal low-pass filtered at 25 / 50 Hz gives 315 / 290 spindles, matching the
     50 / 100 Hz runs at 99 %: the difference comes from the missing band above the lower
     Nyquist rate (here line noise at 58-62 Hz is 2.9 % of the power, the spindle band
-    3.5 %), not from the resampler. The extra detections are mostly additional spindles,
-    the shared ones agree well (median edge difference 11-12 ms at 50-100 Hz).
+    3.5 %), not from the resampler. The extra detections are mostly additional detections,
+    not shifted copies of the 250 Hz ones (recall vs 250 Hz stays >= 0.97); whether they are
+    spindles was not checked. The shared ones agree well (median edge difference 11-12 ms at
+    50-100 Hz).
 
     Consequences:
 
@@ -306,9 +360,14 @@ class SpindleDetector:
       filtered recording from a clean one), so check your own pipeline.
     - **Within a study, use the same sampling rate and the same preprocessing (notch,
       low-pass, re-referencing) for every recording,** or compare densities only between
-      recordings processed alike. Prefer a native rate >= 200 Hz without a notch filter.
-      Absolute spindle densities from data below 200 Hz, or after notch / low-pass
-      filtering below ~60 Hz, are not comparable with those from full-band data.
+      recordings processed alike. Absolute spindle densities from data below 200 Hz, or
+      after notch / low-pass filtering below ~60 Hz, are not directly comparable with those
+      from full-band data.
+    - Which rate or preprocessing agrees best with expert scoring was **not measured**: the
+      counts above are relative to the full-band 250 Hz run only, not to a ground truth. (It
+      is a plausible but untested hypothesis that the full band at >= 200 Hz is closest to
+      the training data; whether the training recordings were notch filtered is not
+      documented.)
 
     .. rubric:: Memory
 
@@ -510,7 +569,7 @@ class SpindleDetector:
         if len(gaps):
             x = fill_gaps(x, fs)
         # 3. resample to ~250 Hz (polyphase FIR = anti-aliasing low-pass)
-        z = x if up == down else resample_poly(x, up, down, padtype='line')
+        z = x if up == down else resample_poly(x, up, down, padtype='line', window=_resample_fir(up, down))
         if z.size < m:                          # rounding at exactly 30 s
             z = np.concatenate([z, np.repeat(z[-1:], m - z.size)])
         z = z[:m]

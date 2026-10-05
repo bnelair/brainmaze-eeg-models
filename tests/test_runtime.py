@@ -379,3 +379,35 @@ def test_check_gpu_success_on_a_working_cuda_session(monkeypatch):
     msg = bm.check_gpu(device_id=2)
     assert msg.startswith("CUDA works: GPU 2") and "CUDAExecutionProvider" in msg
     assert _CudaSession.created[-1][0] == ("CUDAExecutionProvider", {"device_id": 2, "use_tf32": 0})
+
+
+# --- models from bytes; check_gpu needs no temporary file (PR #7 R3) ----------------------
+
+def test_model_from_bytes_matches_the_file():
+    with open(TINY, "rb") as fh:
+        data = fh.read()
+    a = np.arange(6, dtype=np.float32).reshape(2, 3)
+    b = np.ones((2, 4), dtype=np.float32)
+    from_file = OnnxModel(TINY, device="cpu").run({"a": a, "b": b})
+    m = OnnxModel(data, device="cpu", name="tiny", sha256=runtime._sha256(TINY))
+    assert m.path is None and m.name == "tiny"
+    out = m.run({"a": a, "b": b})
+    for k in from_file:
+        np.testing.assert_array_equal(out[k], from_file[k])
+    with pytest.raises(ValueError, match="name is required"):
+        OnnxModel(data, device="cpu")
+    with pytest.raises(RuntimeError, match="given as bytes.*SHA-256"):
+        OnnxModel(data, device="cpu", name="tiny", sha256="0" * 64)
+
+
+def test_check_gpu_does_not_need_a_writable_temp_dir(monkeypatch):
+    import tempfile
+    monkeypatch.setattr(tempfile, "tempdir", os.path.join(os.path.dirname(TINY), "no", "such", "dir"))
+    ort = runtime._ort()
+    monkeypatch.setattr(ort, "get_available_providers", lambda: ["CUDAExecutionProvider", "CPUExecutionProvider"])
+    monkeypatch.setattr(ort, "InferenceSession", _CudaSession)
+    assert runtime.check_gpu().startswith("CUDA works: GPU 0")
+    # without CUDA it is still the documented RuntimeError, never an OSError
+    monkeypatch.setattr(ort, "get_available_providers", lambda: ["CPUExecutionProvider"])
+    with pytest.raises(RuntimeError, match="device='cuda'"):
+        runtime.check_gpu()

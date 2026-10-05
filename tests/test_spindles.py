@@ -536,21 +536,54 @@ def test_low_sampling_rate_warns_and_200_hz_does_not(detectors):
 
 # --- resampling ratio (verification r2, #3 V4): the closest approximate ratio -------------
 
-@pytest.mark.parametrize("fs, ratio", [(256.0000001, (125, 128)), (499.907, (45699, 91381)),
-                                       (2047.98, (12203, 99966)), (50.123, (813, 163))])
-def test_approximate_ratio_is_the_closest(fs, ratio):
+def _brute_force_best_error(fs, lim=10 ** 5):
+    """Smallest exact |n/q - 250/fs| over all n, q >= 1 with max(n, q) <= lim, independent of
+    _resample_ratio: for every value of the larger term, the two nearest values of the other
+    (float screening, then exact Fractions for the candidates within float noise of the best)."""
+    from fractions import Fraction
+    target = Fraction(FS) / Fraction(fs)
+    t = float(target)
+    k = np.arange(1, lim + 1, dtype=np.float64)
+    if t < 1:                                   # denominator q = k is the larger term
+        cands = [(np.floor(t * k), k), (np.ceil(t * k), k)]
+    else:                                       # numerator n = k is the larger term
+        cands = [(k, np.floor(k / t)), (k, np.ceil(k / t))]
+    n = np.concatenate([c[0] for c in cands])
+    q = np.concatenate([c[1] for c in cands])
+    ok = (n >= 1) & (q >= 1) & (n <= lim) & (q <= lim)
+    n, q = n[ok], q[ok]
+    e = np.abs(n / q - t)
+    near = np.flatnonzero(e <= e.min() + 1e-12 * max(t, 1))
+    return min(abs(Fraction(int(n[i]), int(q[i])) - target) for i in near)
+
+
+@pytest.mark.parametrize("fs, ratio, rel_err", [(256.0000001, (125, 128), 1e-9), (499.907, (45699, 91381), 1e-9),
+                                                (2047.98, (12203, 99966), 1e-7), (50.123, (813, 163), 1e-7),
+                                                # Copilot, PR #7: the reciprocal-domain choice gave 2/1
+                                                (125.00062500600006, (99999, 50000), 5.0000021e-6)])
+def test_approximate_ratio_is_the_closest(fs, ratio, rel_err):
     from fractions import Fraction
     up, down, fs_out = _resample_ratio(fs)
     assert (up, down) == ratio and fs_out == fs * up / down
-    err = abs(fs_out - FS) / FS
-    assert err < 1e-7
-    # no ratio with max(up, down) <= 1e5 is closer (the smallest-denominator one used to be
-    # picked: 256.0000001 Hz -> 83/85, 9.4e-5)
-    target = Fraction(FS) / Fraction(fs)
-    for lim in (100, 1000, 10000, 10 ** 5):
-        r = target.limit_denominator(lim) if target < 1 else 1 / (1 / target).limit_denominator(lim)
-        if max(r.numerator, r.denominator) <= 10 ** 5:
-            assert err <= abs(float(r) * fs - FS) / FS + 1e-15
+    assert abs(fs_out - FS) / FS < rel_err
+    # no ratio with max(up, down) <= 1e5 is closer, by an independent brute force (the
+    # smallest-denominator one used to be picked: 256.0000001 Hz -> 83/85, 9.4e-5)
+    assert abs(Fraction(up, down) - Fraction(FS) / Fraction(fs)) == _brute_force_best_error(fs)
+
+
+def test_approximate_ratio_is_the_closest_brute_force_many_rates():
+    # PR #7 R5: up- and downsampling, measured-looking rates from 50 Hz to 65 kHz, plus near-ties
+    rng = np.random.default_rng(7)
+    rates = list(np.exp(rng.uniform(np.log(50), np.log(65536), 150)))
+    rates += list(250 * (1 + rng.uniform(-1e-3, 1e-3, 30)))          # close to 250 Hz
+    rates += [125.00062500600006, 499.907, 256.0000001, 2047.98, 30000.3, 32768.5, 99999.7, 50.0000003]
+    from fractions import Fraction
+    for fs in rates:
+        fs = float(fs)
+        up, down, fs_out = _resample_ratio(fs)
+        assert max(up, down) <= 10 ** 5 and fs_out == pytest.approx(fs * up / down, rel=1e-15)
+        err = abs(Fraction(up, down) - Fraction(FS) / Fraction(fs))
+        assert err == _brute_force_best_error(fs), (fs, up, down)
 
 
 # --- not-evaluated time (verification r2, #3 V3) ----------------------------------------
@@ -680,3 +713,19 @@ def test_full_defaults_match_the_frozen_snapshot_on_the_demo_night(name, kind):
         pytest.skip("demo night not available locally (set BRAINMAZE_DEMO_NIGHT=/path/patient_one_data.mat)")
     x, fs = snap.demo_cases(path)[name]
     _assert_matches_snapshot(name, kind, x, fs)
+
+
+# --- cached anti-aliasing FIR (PR #7 R1): bit-identical to resample_poly's own design ---------
+
+@pytest.mark.parametrize("fs", [499.907, 256.0, 200.0, 1000.0])
+def test_cached_resampling_fir_is_bit_identical(fs):
+    from scipy.signal import resample_poly
+    from brainmaze_eeg_models.spindles._detector import _resample_fir
+    up, down, _ = _resample_ratio(fs)
+    x = np.random.default_rng(3).standard_normal(int(fs * 31))
+    h = _resample_fir(up, down)
+    assert not h.flags.writeable and h.size == 20 * max(up, down) + 1
+    ref = resample_poly(x, up, down, padtype='line')
+    for _ in range(2):                       # the cached array is not modified by resample_poly
+        np.testing.assert_array_equal(resample_poly(x, up, down, padtype='line', window=_resample_fir(up, down)), ref)
+    assert _resample_fir(up, down) is h
