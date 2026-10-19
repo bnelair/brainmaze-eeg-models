@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -25,7 +25,10 @@ dependencies = [
     # Gap (NaN) handling: brainmaze_utils.gaps (new in 3.0.0).
     "brainmaze-utils>=3.0.0",
 ]
-license = { text = "BSD-3-Clause" }
+# BSD-3-Clause for this package AND MIT for the shipped OpenSpindleNet material (the two
+# spindle ONNX models + ported code); see NOTICE.md. PEP 639 (needs setuptools>=77).
+license = "BSD-3-Clause AND MIT"
+license-files = ["LICENSE", "NOTICE.md"]
 classifiers = [
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "Development Status :: 3 - Alpha",
@@ -36,7 +39,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
-    "License :: OSI Approved :: BSD License",
     "Intended Audience :: Healthcare Industry",
     "Intended Audience :: Science/Research",
 ]

@@ -1,7 +1,8 @@
 # Third-party notices
 
-brainmaze-eeg-models is distributed under the BSD 3-Clause License (see `LICENSE`). It contains
-the following third-party material, which remains under its own licence.
+The code of brainmaze-eeg-models is BSD 3-Clause (see `LICENSE`). The distribution also contains
+the following third-party material, which remains under its own licence (MIT), so the distribution
+as a whole is `BSD-3-Clause AND MIT`.
 
 ## OpenSpindleNet
 
