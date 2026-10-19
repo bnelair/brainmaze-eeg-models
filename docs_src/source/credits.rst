@@ -1,7 +1,8 @@
 Credits and licences
 ====================
 
-brainmaze-eeg-models is licensed under the BSD 3-Clause License.
+The package's own code is licensed under the BSD 3-Clause License. The bundled OpenSpindleNet
+models and ported code are MIT (see below), so the distribution is ``BSD-3-Clause AND MIT``.
 
 Seizure detection
 -----------------

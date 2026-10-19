@@ -203,8 +203,8 @@ sphinx-build -b html docs_src/source docs
 
 ## License
 
-BSD 3-Clause, see [LICENSE](https://github.com/bnelair/brainmaze-eeg-models/blob/main/LICENSE). Third-party material (the OpenSpindleNet models and ported
-code, MIT) is listed in [NOTICE.md](https://github.com/bnelair/brainmaze-eeg-models/blob/main/NOTICE.md).
+The package's own code is BSD 3-Clause, see [LICENSE](https://github.com/bnelair/brainmaze-eeg-models/blob/main/LICENSE). The bundled OpenSpindleNet models and ported
+code are MIT (listed in [NOTICE.md](https://github.com/bnelair/brainmaze-eeg-models/blob/main/NOTICE.md)), so the distribution is `BSD-3-Clause AND MIT`.
 
 ## Funding
 
